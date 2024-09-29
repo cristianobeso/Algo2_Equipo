@@ -15,8 +15,6 @@ type iterListaEnlazada[T any] struct {
 	anterior *nodoLista[T]
 	actual   *nodoLista[T]
 	lista    *listaEnlazada[T]
-	//Tengo en mis apuntes que el iterador tenia mas o menos esta estructura
-	//Pero me quedan dudas porque para las primitivas no use 'lista'
 }
 
 func crearNodo[T any](dato T, ptr *nodoLista[T]) *nodoLista[T] {
@@ -32,9 +30,9 @@ func CrearListaEnlazada[T any]() Lista[T] {
 func (lista *listaEnlazada[T]) EstaVacia() bool {
 	return lista.primero == nil
 }
+
 func (lista *listaEnlazada[T]) InsertarPrimero(elemento T) {
-	ptr := lista.primero
-	nuevoNodo := crearNodo(elemento, ptr)
+	nuevoNodo := crearNodo(elemento, lista.primero)
 	if lista.EstaVacia() {
 		lista.ultimo = nuevoNodo
 	}
@@ -46,82 +44,117 @@ func (lista *listaEnlazada[T]) InsertarUltimo(elemento T) {
 	nuevoNodo := crearNodo(elemento, nil)
 	if lista.EstaVacia() {
 		lista.primero = nuevoNodo
+		lista.ultimo = nuevoNodo
 	} else {
 		lista.ultimo.siguiente = nuevoNodo
+		lista.ultimo = nuevoNodo
 	}
-	lista.ultimo = nuevoNodo
 	lista.largo++
 }
 
 func (lista *listaEnlazada[T]) BorrarPrimero() T {
 	if lista.EstaVacia() {
-		panic("Error")
+		panic("La lista esta vacia")
 	}
 	elemento := lista.primero.dato
 	lista.primero = lista.primero.siguiente
+	if lista.primero == nil {
+		lista.ultimo = nil
+	}
 	lista.largo--
 	return elemento
 }
 
 func (lista *listaEnlazada[T]) VerPrimero() T {
 	if lista.EstaVacia() {
-		panic("Error")
+		panic("La lista esta vacia")
 	}
 	return lista.primero.dato
 }
 
 func (lista *listaEnlazada[T]) VerUltimo() T {
 	if lista.EstaVacia() {
-		panic("Error")
+		panic("La lista esta vacia")
 	}
 	return lista.ultimo.dato
 }
 
 func (lista *listaEnlazada[T]) Largo() int {
-	if lista.EstaVacia() {
-		panic("Error")
-	}
 	return lista.largo
 }
 
 func (lista *listaEnlazada[T]) Iterar(visitar func(T) bool) {
-	//Este no tengo idea te lo dejo todo a vos
+	var iterarRecursivo func(*nodoLista[T])
+	iterarRecursivo = func(actual *nodoLista[T]) {
+		if actual == nil {
+			return
+		}
+		if !visitar(actual.dato) {
+			return
+		}
+		iterarRecursivo(actual.siguiente)
+	}
+	iterarRecursivo(lista.primero)
 }
 
 /**************  Fin lista  **************/
 
 /**************  Primitivas del iterador  **************/
-//No estoy seguro si esto funcione, pero es algo
 
 func (lista *listaEnlazada[T]) Iterador() IteradorLista[T] {
-	return &iterListaEnlazada[T]{anterior: nil, actual: nil, lista: lista}
+	return &iterListaEnlazada[T]{actual: lista.primero, lista: lista}
 }
 
 func (iterador *iterListaEnlazada[T]) VerActual() T {
+	if iterador.actual == nil {
+		panic("El iterador termino de iterar")
+	}
 	return iterador.actual.dato
 }
 
 func (iterador *iterListaEnlazada[T]) HaySiguiente() bool {
-	return iterador.actual.siguiente != nil
+	return iterador.actual != nil
 }
 
 func (iterador *iterListaEnlazada[T]) Siguiente() {
-	ptr := iterador.actual.siguiente
+	if iterador.actual == nil {
+		panic("El iterador termino de iterar")
+	}
 	iterador.anterior = iterador.actual
-	iterador.actual = ptr
+	iterador.actual = iterador.actual.siguiente
 }
 
 func (iterador *iterListaEnlazada[T]) Insertar(elemento T) {
-	ptr := iterador.actual.siguiente
-	nuevoNodo := crearNodo(elemento, ptr)
+	nuevoNodo := crearNodo(elemento, iterador.actual)
+	if iterador.anterior == nil {
+		iterador.lista.primero = nuevoNodo
+	} else {
+		iterador.anterior.siguiente = nuevoNodo
+	}
+	if iterador.actual == nil {
+		iterador.lista.ultimo = nuevoNodo
+	}
 	iterador.actual = nuevoNodo
+	iterador.lista.largo++
 }
 
 func (iterador *iterListaEnlazada[T]) Borrar() T {
+	if iterador.actual == nil {
+		panic("El iterador termino de iterar")
+	}
 	elemento := iterador.actual.dato
-	ptr := iterador.actual.siguiente
-	iterador.anterior.siguiente = ptr
-	iterador.actual = ptr
+	if iterador.anterior != nil {
+		iterador.anterior.siguiente = iterador.actual.siguiente
+	} else {
+		iterador.lista.primero = iterador.actual.siguiente
+	}
+	if iterador.lista.ultimo == iterador.actual {
+		iterador.lista.ultimo = iterador.anterior
+	}
+
+	siguiente := iterador.actual.siguiente
+	iterador.lista.largo--
+	iterador.actual = siguiente
 	return elemento
 }
 
