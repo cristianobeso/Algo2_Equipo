@@ -44,11 +44,11 @@ func (lista *listaEnlazada[T]) InsertarUltimo(elemento T) {
 	nuevoNodo := crearNodo(elemento, nil)
 	if lista.EstaVacia() {
 		lista.primero = nuevoNodo
-		lista.ultimo = nuevoNodo
+
 	} else {
 		lista.ultimo.siguiente = nuevoNodo
-		lista.ultimo = nuevoNodo
 	}
+	lista.ultimo = nuevoNodo
 	lista.largo++
 }
 
@@ -106,7 +106,7 @@ func (lista *listaEnlazada[T]) Iterador() IteradorLista[T] {
 }
 
 func (iterador *iterListaEnlazada[T]) VerActual() T {
-	if iterador.actual == nil {
+	if !iterador.HaySiguiente() {
 		panic("El iterador termino de iterar")
 	}
 	return iterador.actual.dato
@@ -117,7 +117,7 @@ func (iterador *iterListaEnlazada[T]) HaySiguiente() bool {
 }
 
 func (iterador *iterListaEnlazada[T]) Siguiente() {
-	if iterador.actual == nil {
+	if !iterador.HaySiguiente() {
 		panic("El iterador termino de iterar")
 	}
 	iterador.anterior = iterador.actual
@@ -131,7 +131,7 @@ func (iterador *iterListaEnlazada[T]) Insertar(elemento T) {
 	} else {
 		iterador.anterior.siguiente = nuevoNodo
 	}
-	if iterador.actual == nil {
+	if !iterador.HaySiguiente() {
 		iterador.lista.ultimo = nuevoNodo
 	}
 	iterador.actual = nuevoNodo
@@ -139,7 +139,7 @@ func (iterador *iterListaEnlazada[T]) Insertar(elemento T) {
 }
 
 func (iterador *iterListaEnlazada[T]) Borrar() T {
-	if iterador.actual == nil {
+	if !iterador.HaySiguiente() {
 		panic("El iterador termino de iterar")
 	}
 	elemento := iterador.actual.dato
