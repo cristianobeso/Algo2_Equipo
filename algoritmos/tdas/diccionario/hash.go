@@ -35,11 +35,15 @@ func CrearHash[K comparable, V any]() Diccionario[K, V] {
 	return hash
 }
 
+func convertirABytes[K comparable](clave K) []byte {
+	return []byte(fmt.Sprintf("%v", clave))
+}
+
 // calcula el hash con fnv que teoricamente anda bien, pero no se que fuente pondriamos
 // en la pagina oficial de GO estaria igualmente:  https://pkg.go.dev/hash/fnv#New128a
 func calcularHash[K comparable](clave K) uint32 {
 	h := fnv.New32a()
-	h.Write([]byte(fmt.Sprintf("%v", clave)))
+	h.Write(convertirABytes(clave))
 	return h.Sum32()
 }
 
