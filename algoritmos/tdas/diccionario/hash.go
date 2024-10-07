@@ -7,7 +7,7 @@ import (
 )
 
 const capacidadInicial = 10
-const factorCargaMaximo = 0.75 // Factor de carga, donde era 1 creo el max pero teniamos que poner menos por las dudas no?
+const factorCargaMaximo = 2 // Factor de carga, donde era 1 creo el max pero teniamos que poner menos por las dudas no?
 
 type entradaDiccionario[K comparable, V any] struct {
 	clave K
@@ -17,6 +17,7 @@ type entradaDiccionario[K comparable, V any] struct {
 type diccionarioHashAbierto[K comparable, V any] struct {
 	tablas   []lista.Lista[entradaDiccionario[K, V]] // Listas enlazadas para colisiones
 	cantidad int
+	tam      int
 }
 
 type iteradorDiccionarioHashAbierto[K comparable, V any] struct {
@@ -27,7 +28,7 @@ type iteradorDiccionarioHashAbierto[K comparable, V any] struct {
 
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
 	hash := &diccionarioHashAbierto[K, V]{
-		tablas: make([]lista.Lista[entradaDiccionario[K, V]], capacidadInicial),
+		tablas: make([]lista.Lista[entradaDiccionario[K, V]], capacidadInicial), tam: capacidadInicial,
 	}
 	for i := 0; i < capacidadInicial; i++ {
 		hash.tablas[i] = lista.CrearListaEnlazada[entradaDiccionario[K, V]]()
@@ -65,19 +66,20 @@ func (diccionario *diccionarioHashAbierto[K, V]) redimensionar(nuevaCapacidad in
 		})
 	}
 	diccionario.tablas = nuevasTablas
+	diccionario.tam = nuevaCapacidad
 }
 
 func (diccionario *diccionarioHashAbierto[K, V]) Guardar(clave K, dato V) {
 
-	if float64(diccionario.cantidad)/float64(len(diccionario.tablas)) > factorCargaMaximo {
+	if float64(diccionario.cantidad)/float64(diccionario.tam) > factorCargaMaximo {
 		diccionario.redimensionar(len(diccionario.tablas) * 2) // Duplicamo ?
 	}
 
-	hash := calcularHash(clave) % uint32(len(diccionario.tablas))
+	hash := calcularHash(clave) % uint32(diccionario.tam)
 	lista := diccionario.tablas[hash]
 
 	iter := lista.Iterador()
-	actual := false
+	encontrado := false
 
 	for iter.HaySiguiente() {
 		entrada := iter.VerActual()
@@ -85,24 +87,20 @@ func (diccionario *diccionarioHashAbierto[K, V]) Guardar(clave K, dato V) {
 		if entrada.clave == clave {
 
 			iter.Borrar()
-			actual = true
+			encontrado = true
 			break // no se si usar los breaks
 		}
 		iter.Siguiente()
 	}
-
-	if actual {
-		lista.InsertarUltimo(entradaDiccionario[K, V]{clave, dato})
-	} else {
-		// Si no se encontró la clave, se agrega como nueva entrada
-		lista.InsertarUltimo(entradaDiccionario[K, V]{clave, dato})
+	lista.InsertarUltimo(entradaDiccionario[K, V]{clave, dato})
+	if !encontrado {
 		diccionario.cantidad++
 	}
 }
 
 func (diccionario *diccionarioHashAbierto[K, V]) Obtener(clave K) V {
 
-	hash := calcularHash(clave) % uint32(len(diccionario.tablas))
+	hash := calcularHash(clave) % uint32(diccionario.tam)
 	lista := diccionario.tablas[hash]
 
 	var valor V
@@ -127,7 +125,7 @@ func (diccionario *diccionarioHashAbierto[K, V]) Obtener(clave K) V {
 
 func (diccionario *diccionarioHashAbierto[K, V]) Pertenece(clave K) bool {
 
-	hash := calcularHash(clave) % uint32(len(diccionario.tablas))
+	hash := calcularHash(clave) % uint32(diccionario.tam)
 	lista := diccionario.tablas[hash]
 
 	encontrado := false
@@ -145,7 +143,7 @@ func (diccionario *diccionarioHashAbierto[K, V]) Pertenece(clave K) bool {
 
 func (diccionario *diccionarioHashAbierto[K, V]) Borrar(clave K) V {
 
-	hash := calcularHash(clave) % uint32(len(diccionario.tablas))
+	hash := calcularHash(clave) % uint32(diccionario.tam)
 	lista := diccionario.tablas[hash]
 
 	var valor V
@@ -181,9 +179,18 @@ func (diccionario *diccionarioHashAbierto[K, V]) Cantidad() int {
 // Iterar aplica una función a cada par clave-dato en el diccionario.
 func (d *diccionarioHashAbierto[K, V]) Iterar(visitar func(K, V) bool) {
 	for _, lista := range d.tablas {
+		salirAntes := false
 		lista.Iterar(func(nodo entradaDiccionario[K, V]) bool {
-			return visitar(nodo.clave, nodo.dato)
+			if visitar(nodo.clave, nodo.dato) {
+				return true
+			} else {
+				salirAntes = true
+				return false
+			}
 		})
+		if salirAntes {
+			break
+		}
 	}
 }
 
@@ -200,12 +207,12 @@ func (d *diccionarioHashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 
 // avanzar mueve el iterador a la siguiente lista con entradas.
 func (iter *iteradorDiccionarioHashAbierto[K, V]) avanzar() {
-	for iter.indice < len(iter.diccionario.tablas) {
+	for iter.indice < iter.diccionario.tam {
 		if iter.iterLista.HaySiguiente() {
 			return // Si hay un siguiente elemento, no hacemos nada más.
 		}
 		iter.indice++
-		if iter.indice < len(iter.diccionario.tablas) {
+		if iter.indice < iter.diccionario.tam {
 			iter.iterLista = iter.diccionario.tablas[iter.indice].Iterador()
 		}
 	}
@@ -213,13 +220,13 @@ func (iter *iteradorDiccionarioHashAbierto[K, V]) avanzar() {
 
 // HaySiguiente verifica si hay un siguiente elemento.
 func (iter *iteradorDiccionarioHashAbierto[K, V]) HaySiguiente() bool {
-	return iter.indice < len(iter.diccionario.tablas) && iter.iterLista.HaySiguiente()
+	return iter.indice < iter.diccionario.tam && iter.iterLista.HaySiguiente()
 }
 
 // VerActual devuelve el elemento actual del iterador.
 func (iter *iteradorDiccionarioHashAbierto[K, V]) VerActual() (K, V) {
 	if !iter.HaySiguiente() {
-		panic("El iterador terminó de iterar")
+		panic("El iterador termino de iterar")
 	}
 	nodo := iter.iterLista.VerActual()
 	return nodo.clave, nodo.dato
@@ -228,7 +235,7 @@ func (iter *iteradorDiccionarioHashAbierto[K, V]) VerActual() (K, V) {
 // Siguiente avanza al siguiente elemento en el iterador.
 func (iter *iteradorDiccionarioHashAbierto[K, V]) Siguiente() {
 	if !iter.HaySiguiente() {
-		panic("El iterador terminó de iterar")
+		panic("El iterador termino de iterar")
 	}
 	iter.iterLista.Siguiente()
 	iter.avanzar() // Solo avanzar si hay un siguiente elemento.
