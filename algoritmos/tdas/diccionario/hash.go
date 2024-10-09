@@ -6,8 +6,8 @@ import (
 	"tdas/lista"
 )
 
-const capacidadInicial = 10
-const factorCargaMaximo = 2
+const capacidadInicial = 5
+const factorCargaMaximo = 2.3
 
 type entradaDiccionario[K comparable, V any] struct {
 	clave K
@@ -24,6 +24,20 @@ type iteradorDiccionarioHashAbierto[K comparable, V any] struct {
 	diccionario *diccionarioHashAbierto[K, V]
 	indice      int
 	iterLista   lista.IteradorLista[entradaDiccionario[K, V]]
+}
+
+// Esta funcion devuelve el primo que sea mayor al doble del primo recivido
+// Funciona mejor si se comienza con 5
+// Hasta 409.597 siendo este primo se acierta con 90%
+// En adelante se acierta con 30%
+// Ultimo primo verificado 1.677.721.597
+// Mejor forma que encontramos para que sea de tiempo constante
+func posiblePrimo(num int) int {
+	nuevoNumero := num*2 + 1
+	if nuevoNumero%10 == 5 {
+		nuevoNumero += 2
+	}
+	return nuevoNumero
 }
 
 /*
@@ -101,7 +115,7 @@ Si se supera el factor de carga máximo, se redimensiona la tabla antes de inser
 func (diccionario *diccionarioHashAbierto[K, V]) Guardar(clave K, dato V) {
 
 	if float64(diccionario.cantidad)/float64(diccionario.tam) > factorCargaMaximo {
-		diccionario.redimensionar(len(diccionario.tablas) * 2)
+		diccionario.redimensionar(posiblePrimo(diccionario.tam))
 	}
 
 	hash := calcularHash(clave) % uint32(diccionario.tam)
