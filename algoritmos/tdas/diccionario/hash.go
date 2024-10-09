@@ -7,7 +7,7 @@ import (
 )
 
 const capacidadInicial = 10
-const factorCargaMaximo = 2 // Factor de carga, donde era 1 creo el max pero teniamos que poner menos por las dudas no?
+const factorCargaMaximo = 2
 
 type entradaDiccionario[K comparable, V any] struct {
 	clave K
@@ -15,7 +15,7 @@ type entradaDiccionario[K comparable, V any] struct {
 }
 
 type diccionarioHashAbierto[K comparable, V any] struct {
-	tablas   []lista.Lista[entradaDiccionario[K, V]] // Listas enlazadas para colisiones
+	tablas   []lista.Lista[entradaDiccionario[K, V]]
 	cantidad int
 	tam      int
 }
@@ -26,6 +26,12 @@ type iteradorDiccionarioHashAbierto[K comparable, V any] struct {
 	iterLista   lista.IteradorLista[entradaDiccionario[K, V]]
 }
 
+/*
+Precondiciones: Ninguna.
+
+Postcondiciones: Devuelve un diccionario hash vacío con capacidad inicial definida. Las tablas están
+inicializadas como listas enlazadas vacías.
+*/
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
 	hash := &diccionarioHashAbierto[K, V]{
 		tablas: make([]lista.Lista[entradaDiccionario[K, V]], capacidadInicial), tam: capacidadInicial,
@@ -36,18 +42,33 @@ func CrearHash[K comparable, V any]() Diccionario[K, V] {
 	return hash
 }
 
+/*
+Precondiciones: La clave debe ser un valor comparable.
+
+Postcondiciones: Devuelve la representación en bytes de la clave.
+*/
 func convertirABytes[K comparable](clave K) []byte {
 	return []byte(fmt.Sprintf("%v", clave))
 }
 
-// calcula el hash con fnv que teoricamente anda bien, pero no se que fuente pondriamos
-// en la pagina oficial de GO estaria igualmente:  https://pkg.go.dev/hash/fnv#New128a
+/*
+Precondiciones: La clave debe ser un valor comparable.
+
+Postcondiciones: Devuelve el hash de la clave como un valor uint32, utilizando el algoritmo FNV.
+En la pagina oficial de GO:  https://pkg.go.dev/hash/fnv#New128a
+*/
 func calcularHash[K comparable](clave K) uint32 {
 	h := fnv.New32a()
 	h.Write(convertirABytes(clave))
 	return h.Sum32()
 }
 
+/*
+Precondiciones: nuevaCapacidad debe ser un valor positivo mayor que 0.
+
+Postcondiciones: Redimensiona el diccionario hash duplicando su capacidad, moviendo las entradas
+existentes a la nueva tabla según su nuevo índice de hash.
+*/
 func (diccionario *diccionarioHashAbierto[K, V]) redimensionar(nuevaCapacidad int) {
 
 	nuevasTablas := make([]lista.Lista[entradaDiccionario[K, V]], nuevaCapacidad)
@@ -69,10 +90,18 @@ func (diccionario *diccionarioHashAbierto[K, V]) redimensionar(nuevaCapacidad in
 	diccionario.tam = nuevaCapacidad
 }
 
+/*
+Precondiciones: La clave debe ser un valor comparable.
+El diccionario no debe estar lleno (el factor de carga no debe superar el máximo).
+
+Postcondiciones: Si la clave ya existe, el dato asociado es reemplazado.
+Si la clave no existe, se inserta un nuevo par clave-dato y se incrementa la cantidad de elementos.
+Si se supera el factor de carga máximo, se redimensiona la tabla antes de insertar.
+*/
 func (diccionario *diccionarioHashAbierto[K, V]) Guardar(clave K, dato V) {
 
 	if float64(diccionario.cantidad)/float64(diccionario.tam) > factorCargaMaximo {
-		diccionario.redimensionar(len(diccionario.tablas) * 2) // Duplicamo ?
+		diccionario.redimensionar(len(diccionario.tablas) * 2)
 	}
 
 	hash := calcularHash(clave) % uint32(diccionario.tam)
@@ -88,7 +117,7 @@ func (diccionario *diccionarioHashAbierto[K, V]) Guardar(clave K, dato V) {
 
 			iter.Borrar()
 			encontrado = true
-			break // no se si usar los breaks
+			break
 		}
 		iter.Siguiente()
 	}
@@ -98,6 +127,12 @@ func (diccionario *diccionarioHashAbierto[K, V]) Guardar(clave K, dato V) {
 	}
 }
 
+/*
+Precondiciones: La clave debe ser un valor comparable.
+La clave debe existir en el diccionario.
+
+Postcondiciones: Devuelve el valor asociado a la clave. Si la clave no existe, se genera un pánico.
+*/
 func (diccionario *diccionarioHashAbierto[K, V]) Obtener(clave K) V {
 
 	hash := calcularHash(clave) % uint32(diccionario.tam)
@@ -123,6 +158,11 @@ func (diccionario *diccionarioHashAbierto[K, V]) Obtener(clave K) V {
 	return valor
 }
 
+/*
+Precondiciones: La clave debe ser un valor comparable.
+
+Postcondiciones: Devuelve true si la clave existe en el diccionario, false si no.
+*/
 func (diccionario *diccionarioHashAbierto[K, V]) Pertenece(clave K) bool {
 
 	hash := calcularHash(clave) % uint32(diccionario.tam)
@@ -141,6 +181,12 @@ func (diccionario *diccionarioHashAbierto[K, V]) Pertenece(clave K) bool {
 	return encontrado
 }
 
+/*
+Precondiciones: La clave debe ser un valor comparable. La clave debe existir en el diccionario.
+
+Postcondiciones: Elimina la entrada asociada a la clave y devuelve el valor almacenado.
+Si la clave no existe, se genera un pánico.
+*/
 func (diccionario *diccionarioHashAbierto[K, V]) Borrar(clave K) V {
 
 	hash := calcularHash(clave) % uint32(diccionario.tam)
@@ -170,13 +216,22 @@ func (diccionario *diccionarioHashAbierto[K, V]) Borrar(clave K) V {
 	return valor
 }
 
+/*
+Precondiciones: Ninguna.
+
+Postcondiciones: Devuelve la cantidad actual de elementos en el diccionario.
+*/
 func (diccionario *diccionarioHashAbierto[K, V]) Cantidad() int {
 	return diccionario.cantidad
 }
 
-/**************  TODO ESTO MAL, LO HIZO CHAT GPT Y NO PASA LOS TESTS, fallan unos 4 tests maso **************/
+/*
+Precondiciones: El diccionario debe estar correctamente inicializado. Visitar es una función que toma una clave
+y un valor, devolviendo true para continuar la iteración y false para detenerla.
 
-// Iterar aplica una función a cada par clave-dato en el diccionario.
+Postcondiciones: Aplica la función visitar a cada par clave-valor en el diccionario. Si visitar devuelve false,
+se detiene la iteración antes de finalizar.
+*/
 func (d *diccionarioHashAbierto[K, V]) Iterar(visitar func(K, V) bool) {
 	for _, lista := range d.tablas {
 		salirAntes := false
@@ -194,22 +249,31 @@ func (d *diccionarioHashAbierto[K, V]) Iterar(visitar func(K, V) bool) {
 	}
 }
 
-// Iterador devuelve un iterador para el diccionario.
+/*
+Precondiciones: Ninguna.
+
+Postcondiciones: Devuelve un iterador externo para recorrer el diccionario.
+*/
 func (d *diccionarioHashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 	iter := &iteradorDiccionarioHashAbierto[K, V]{
 		diccionario: d,
 		indice:      0,
-		iterLista:   d.tablas[0].Iterador(), // Podría necesitar ajustes si la tabla está vacía
+		iterLista:   d.tablas[0].Iterador(),
 	}
-	iter.avanzar() // Mueve al primer elemento válido
+	iter.avanzar()
 	return iter
 }
 
-// avanzar mueve el iterador a la siguiente lista con entradas.
+/*
+Precondiciones: El iterador debe estar asociado a un diccionario válido.
+
+Postcondiciones: Avanza el iterador al siguiente elemento válido en el diccionario, o lo deja en un estado
+inválido si no hay más elementos.
+*/
 func (iter *iteradorDiccionarioHashAbierto[K, V]) avanzar() {
 	for iter.indice < iter.diccionario.tam {
 		if iter.iterLista.HaySiguiente() {
-			return // Si hay un siguiente elemento, no hacemos nada más.
+			return
 		}
 		iter.indice++
 		if iter.indice < iter.diccionario.tam {
@@ -218,12 +282,20 @@ func (iter *iteradorDiccionarioHashAbierto[K, V]) avanzar() {
 	}
 }
 
-// HaySiguiente verifica si hay un siguiente elemento.
+/*
+Precondiciones: El iterador debe estar asociado a un diccionario válido.
+
+Postcondiciones: Devuelve true si hay un siguiente elemento disponible en el iterador, false si no.
+*/
 func (iter *iteradorDiccionarioHashAbierto[K, V]) HaySiguiente() bool {
 	return iter.indice < iter.diccionario.tam && iter.iterLista.HaySiguiente()
 }
 
-// VerActual devuelve el elemento actual del iterador.
+/*
+Precondiciones: El iterador debe estar en un estado válido. Debe haber un elemento disponible.
+
+Postcondiciones: Devuelve la clave y el valor del elemento actual. Si no hay un elemento válido, genera un pánico.
+*/
 func (iter *iteradorDiccionarioHashAbierto[K, V]) VerActual() (K, V) {
 	if !iter.HaySiguiente() {
 		panic("El iterador termino de iterar")
@@ -232,11 +304,15 @@ func (iter *iteradorDiccionarioHashAbierto[K, V]) VerActual() (K, V) {
 	return nodo.clave, nodo.dato
 }
 
-// Siguiente avanza al siguiente elemento en el iterador.
+/*
+Precondiciones: El iterador debe estar en un estado válido. Debe haber un siguiente elemento disponible.
+
+Postcondiciones: Avanza el iterador al siguiente elemento en el diccionario. Si no hay más elementos, genera un pánico.
+*/
 func (iter *iteradorDiccionarioHashAbierto[K, V]) Siguiente() {
 	if !iter.HaySiguiente() {
 		panic("El iterador termino de iterar")
 	}
 	iter.iterLista.Siguiente()
-	iter.avanzar() // Solo avanzar si hay un siguiente elemento.
+	iter.avanzar()
 }
