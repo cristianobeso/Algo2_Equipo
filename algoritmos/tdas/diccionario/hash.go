@@ -211,7 +211,6 @@ func (diccionario *diccionarioHashAbierto[K, V]) Borrar(clave K) V {
 	iter := lista.Iterador()
 
 	for iter.HaySiguiente() {
-
 		if iter.VerActual().clave == clave {
 			valor = iter.VerActual().dato
 			iter.Borrar()
@@ -219,12 +218,15 @@ func (diccionario *diccionarioHashAbierto[K, V]) Borrar(clave K) V {
 			diccionario.cantidad--
 			break
 		}
-
 		iter.Siguiente()
 	}
 
 	if !encontrado {
 		panic("La clave no pertenece al diccionario")
+	}
+
+	if diccionario.cantidad > 0 && float64(diccionario.cantidad)/float64(diccionario.tam) < 0.5 {
+		diccionario.redimensionar(diccionario.tam / 2)
 	}
 
 	return valor
