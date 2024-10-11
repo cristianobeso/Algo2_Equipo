@@ -12,6 +12,9 @@ func TestListaVacia(t *testing.T) {
 	l := lista.CrearListaEnlazada[int]()
 	require.True(t, l.EstaVacia())
 	require.Equal(t, 0, l.Largo())
+	require.PanicsWithValue(t, "La lista esta vacia", func() { l.BorrarPrimero() })
+	require.PanicsWithValue(t, "La lista esta vacia", func() { l.VerPrimero() })
+	require.PanicsWithValue(t, "La lista esta vacia", func() { l.VerUltimo() })
 }
 
 func TestInsertarPrimero(t *testing.T) {
@@ -78,6 +81,28 @@ func TestIterar(t *testing.T) {
 		return true
 	})
 	require.Equal(t, 6, suma)
+
+	lista := lista.CrearListaEnlazada[int]()
+	for i := 0; i < 20; i++ {
+		lista.InsertarUltimo(i)
+	}
+
+	var sumarRango int
+	lista.Iterar(func(elemento int) bool {
+		sumarRango += elemento
+		return elemento < 10
+	})
+	require.Equal(t, 55, sumarRango)
+
+	var indice int = 0
+	lista.Iterar(func(elemento int) bool {
+		if elemento == 10 {
+			return false
+		}
+		indice++
+		return true
+	})
+	require.Equal(t, 10, indice)
 }
 
 func TestIteradorInsertarAlInicio(t *testing.T) {

@@ -6,3 +6,9 @@ type nodoAbb[K comparable, V any] struct {
 	clave     K
 	dato      V
 }
+
+type abb[K comparable, V any] struct {
+	raiz     *nodoAbb[K, V]
+	cantidad int
+	cmp      funcCmp[K]
+}

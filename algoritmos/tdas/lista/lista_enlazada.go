@@ -88,7 +88,7 @@ func (lista *listaEnlazada[T]) BorrarPrimero() T {
 	}
 	elemento := lista.primero.dato
 	lista.primero = lista.primero.siguiente
-	if lista.primero == nil {
+	if lista.EstaVacia() {
 		lista.ultimo = nil
 	}
 	lista.largo--
@@ -230,9 +230,8 @@ func (iterador *iterListaEnlazada[T]) Borrar() T {
 		iterador.lista.ultimo = iterador.anterior
 	}
 
-	siguiente := iterador.actual.siguiente
 	iterador.lista.largo--
-	iterador.actual = siguiente
+	iterador.actual = iterador.actual.siguiente
 	return elemento
 }
 
