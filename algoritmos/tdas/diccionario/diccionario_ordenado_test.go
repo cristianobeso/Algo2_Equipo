@@ -11,9 +11,9 @@ import (
 func TestDiccionario(t *testing.T) {
 	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
 		if elemento1 < elemento2 {
-			return 1
-		} else if elemento1 > elemento2 {
 			return -1
+		} else if elemento1 > elemento2 {
+			return 1
 		} else {
 			return 0
 		}
@@ -39,22 +39,23 @@ func TestDiccionario(t *testing.T) {
 	require.Equal(t, 1500, dic.Obtener(15))
 	require.Equal(t, 3, dic.Cantidad())
 
-	// lo recorre al reves, pero funciona
 	iter := dic.Iterador()
+
 	k, v := iter.VerActual()
-	require.Equal(t, k, 15)
-	require.Equal(t, v, 1500)
+	require.Equal(t, k, 5)
+	require.Equal(t, v, 500)
 
 	iter.Siguiente()
+
 	k, v = iter.VerActual()
 	require.Equal(t, k, 10)
 	require.Equal(t, v, 1000)
 
 	iter.Siguiente()
+
 	k, v = iter.VerActual()
-	require.Equal(t, k, 5)
-	require.Equal(t, v, 500)
-	// o quizas lo guarda al reves ?
+	require.Equal(t, k, 15)
+	require.Equal(t, v, 1500)
 
 	dic.Iterar(func(clave, dato int) bool {
 		fmt.Println(clave, dato)

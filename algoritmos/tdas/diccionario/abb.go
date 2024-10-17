@@ -41,7 +41,7 @@ func (nodo *nodoAbb[K, V]) ubicar(clave K, ptrPadre *nodoAbb[K, V], num int, fun
 	if nodo.clave == clave {
 		return nodo, 0
 	}
-	if funcCmp(nodo.clave, clave) > 0 { // Se supone que la comparacion devuelve un valor positivo si el segundo es mas grande
+	if funcCmp(nodo.clave, clave) > 0 { // Se supone que la comparacion devuelve un valor positivo si el primero es mas grande
 		return nodo.izquierdo.ubicar(clave, nodo, -1, funcCmp)
 	} else {
 		return nodo.derecho.ubicar(clave, nodo, 1, funcCmp)
