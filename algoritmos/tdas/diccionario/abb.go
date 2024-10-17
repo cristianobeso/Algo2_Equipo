@@ -1,5 +1,9 @@
 package diccionario
 
+import (
+	"tdas/pila"
+)
+
 type nodoAbb[K comparable, V any] struct {
 	izquierdo *nodoAbb[K, V]
 	derecho   *nodoAbb[K, V]
@@ -11,6 +15,12 @@ type abb[K comparable, V any] struct {
 	raiz     *nodoAbb[K, V]
 	cantidad int
 	funcCmp  func(K, K) int
+}
+
+type iterDicAbb[K comparable, V any] struct {
+	dic    *abb[K, V]
+	actual *nodoAbb[K, V]
+	pila   pila.Pila[*nodoAbb[K, V]]
 }
 
 // Hay que hacer todas las funciones otra vez
@@ -31,7 +41,7 @@ func (nodo *nodoAbb[K, V]) ubicar(clave K, ptrPadre *nodoAbb[K, V], num int, fun
 	if nodo.clave == clave {
 		return nodo, 0
 	}
-	if funcCmp(nodo.clave, clave) > 0 { // Se supone que la comparacion devuelve un valor positivo si el primero es mas grande
+	if funcCmp(nodo.clave, clave) > 0 { // Se supone que la comparacion devuelve un valor positivo si el segundo es mas grande
 		return nodo.izquierdo.ubicar(clave, nodo, -1, funcCmp)
 	} else {
 		return nodo.derecho.ubicar(clave, nodo, 1, funcCmp)
@@ -39,51 +49,50 @@ func (nodo *nodoAbb[K, V]) ubicar(clave K, ptrPadre *nodoAbb[K, V], num int, fun
 }
 
 func (abb *abb[K, V]) Guardar(clave K, dato V) {
-	ptr, dir := abb.raiz.ubicar(clave, abb.raiz, 0, abb.funcCmp)
 	nuevoNodo := crearNodo(clave, dato)
-	if ptr == nil {
+	if abb.raiz == nil {
 		abb.raiz = nuevoNodo
+		abb.cantidad++
 	}
+	ptr, dir := abb.raiz.ubicar(clave, abb.raiz, 0, abb.funcCmp)
 	if dir == -1 {
-		(*ptr).izquierdo = nuevoNodo
+		ptr.izquierdo = nuevoNodo
+		abb.cantidad++
 	} else if dir == 1 {
-		(*ptr).derecho = nuevoNodo
+		ptr.derecho = nuevoNodo
+		abb.cantidad++
 	} else {
-		(*ptr).dato = dato
+		ptr.dato = dato
 	}
-	abb.cantidad++
-	// despues habrai que crear una funcion para rotar
+
+	// despues habria que crear una funcion para rotar
 }
+
+// func (abb *abb[K, V]) Pertenece(clave K) bool {
+// 	cont := 0
+// 	abb.Iterar(func(claveB K, dato V) bool {
+// 		if claveB == clave {
+// 			return false
+// 		}
+// 		cont++
+// 		return true
+// 	})
+// 	return cont+1 != abb.cantidad // Si el indice es distinto significa que se corto la iteracion por ende encontro el elemento
+// }
 
 func (abb *abb[K, V]) Pertenece(clave K) bool {
-	cont := 0
-	abb.Iterar(func(claveB K, dato V) bool {
-		if claveB == clave {
-			return false
-		}
-		cont++
-		return true
-	})
-	return cont+1 != abb.cantidad // Si el indice es distinto significa que se corto la iteracion por ende encontro el elemento
-}
-
-func (abb *abb[K, V]) PerteneceV2(clave K) bool {
 	ptr, dir := abb.raiz.ubicar(clave, abb.raiz, 0, abb.funcCmp)
 	return ptr != nil && dir == 0 // Si al ubicarlo el ptr no es nulo y la direccion es 0
 	// significa que ese puntero es el que tiene la clave buscada
 }
 
-func (abb *abb[K, V]) ObtenerV2(clave K) V {
+func (abb *abb[K, V]) Obtener(clave K) V {
 	ptr, dir := abb.raiz.ubicar(clave, abb.raiz, 0, abb.funcCmp)
 
 	if ptr != nil && dir == 0 {
 		return (*ptr).dato
 	}
 	panic("NO encontrado")
-}
-
-func (abb *abb[K, V]) Obtener(clave K) V {
-	return abb.raiz.dato // por ahora para no marcar error en el ide
 }
 
 func (abb *abb[K, V]) Borrar(clave K) V {
@@ -113,13 +122,45 @@ func (nodo *nodoAbb[K, V]) iterar(f func(clave K, dato V) bool) {
 }
 
 func (abb *abb[K, V]) Iterador() IterDiccionario[K, V] {
-	//
+	nuevaPila := pila.CrearPilaDinamica[*nodoAbb[K, V]]()
+	nuevaPila.Apilar(abb.raiz)
+	var nodoActual *nodoAbb[K, V]
+	nodoActual = abb.raiz
+	if nodoActual != nil {
+		for nodoActual.izquierdo != nil {
+			nodoActual = nodoActual.izquierdo
+			nuevaPila.Apilar(nodoActual)
+		}
+	}
+	return &iterDicAbb[K, V]{dic: abb, actual: nodoActual, pila: nuevaPila}
 }
 
-func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato V) bool) {
-	//
+func (iter *iterDicAbb[K, V]) HaySiguiente() bool {
+	return !iter.pila.EstaVacia()
 }
 
-func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
-
+func (iter *iterDicAbb[K, V]) Siguiente() {
+	if iter.HaySiguiente() {
+		nodoActual := iter.pila.Desapilar()
+		if nodoActual.derecho != nil { // si existe un hijo derecho del desapilado lo apilo
+			nodoActual = nodoActual.derecho
+			iter.pila.Apilar(nodoActual)
+			for nodoActual.izquierdo != nil { // y apilo a todos sus hijos izquierdos
+				nodoActual = nodoActual.izquierdo
+				iter.pila.Apilar(nodoActual)
+			}
+		}
+	}
 }
+
+func (iter *iterDicAbb[K, V]) VerActual() (K, V) {
+	return iter.pila.VerTope().clave, iter.pila.VerTope().dato
+}
+
+// func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato V) bool) {
+// 	//
+// }
+
+// func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
+
+// }
