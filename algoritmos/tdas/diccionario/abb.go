@@ -200,9 +200,30 @@ func (iter *iterDicAbb[K, V]) VerActual() (K, V) {
 	return iter.pila.VerTope().clave, iter.pila.VerTope().dato
 }
 
-// func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato V) bool) {
-// 	//
-// }
+func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato V) bool) {
+	pila := pila.CrearPilaDinamica[*nodoAbb[K, V]]()
+	apilarRecursivo(abb.raiz, *desde, abb.funcCmp, pila)
+	for !pila.EstaVacia() {
+		nodoActual := pila.Desapilar()
+		if abb.funcCmp(*hasta, nodoActual.clave) < 0 {
+			return
+		}
+		if abb.funcCmp(nodoActual.clave, *desde) >= 0 {
+			visitar(nodoActual.clave, nodoActual.dato)
+			if nodoActual.derecho != nil {
+
+				pila.Apilar(nodoActual.derecho)
+				//quizas se pueda usar la variable nodoActual...
+				proximoNodo := nodoActual.derecho
+				for proximoNodo.izquierdo != nil {
+					proximoNodo = proximoNodo.izquierdo
+					pila.Apilar(proximoNodo)
+				}
+
+			}
+		}
+	}
+}
 
 // func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
 

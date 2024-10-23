@@ -169,4 +169,20 @@ func TestAltura(t *testing.T) {
 	require.Equal(t, dic.Altura(), 4)
 	dic.Guardar(33, 481)
 	require.Equal(t, dic.Altura(), 5)
+
+	//prueba del iterador por rango
+
+	claveInicio := 15
+	claveFin := 36
+	slice := []int{}
+	dic.IterarRango(&claveInicio, &claveFin, func(clave, dato int) bool {
+		slice = append(slice, clave)
+		return true
+	})
+	require.Equal(t, slice[0], 15)
+	require.Equal(t, slice[1], 20)
+	require.Equal(t, slice[2], 22)
+	require.Equal(t, slice[3], 30)
+	require.Equal(t, slice[4], 33)
+	require.Equal(t, slice[5], 35)
 }
