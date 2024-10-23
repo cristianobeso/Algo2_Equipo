@@ -9,6 +9,7 @@ type nodoAbb[K comparable, V any] struct {
 	derecho   *nodoAbb[K, V]
 	clave     K
 	dato      V
+	altura    int
 }
 
 type abb[K comparable, V any] struct {
@@ -30,7 +31,52 @@ func CrearABB[K comparable, V any](function_cmp func(K, K) int) DiccionarioOrden
 }
 
 func crearNodo[K comparable, V any](clave K, dato V) *nodoAbb[K, V] {
-	return &nodoAbb[K, V]{izquierdo: nil, derecho: nil, clave: clave, dato: dato}
+	return &nodoAbb[K, V]{izquierdo: nil, derecho: nil, clave: clave, dato: dato, altura: 1}
+}
+
+func mayor(num1, num2 int) int {
+	if num1 > num2 {
+		return num1
+	}
+	return num2
+}
+
+// actualiza hasta el padre del ultimo hijo insertado
+func (nodo *nodoAbb[K, V]) actualizarAltura(clave K, funcCmp func(K, K) int) {
+	pila := pila.CrearPilaDinamica[*nodoAbb[K, V]]()
+	apilarRecursivo(nodo, clave, funcCmp, pila)
+
+	var alturaIzq, alturaDer int
+	for !pila.EstaVacia() {
+		nodoActual := pila.Desapilar()
+		if nodoActual.izquierdo == nil {
+			alturaIzq = 0
+		} else {
+			alturaIzq = nodoActual.izquierdo.altura
+		}
+		if nodoActual.derecho == nil {
+			alturaDer = 0
+		} else {
+			alturaDer = nodoActual.derecho.altura
+		}
+		(*nodoActual).altura = mayor(alturaIzq, alturaDer) + 1
+	}
+}
+
+func apilarRecursivo[K comparable, V any](nodo *nodoAbb[K, V], clave K, funcCmp func(K, K) int, pila pila.Pila[*nodoAbb[K, V]]) {
+	pila.Apilar(nodo)
+	if nodo.clave == clave {
+		return
+	}
+	if funcCmp(nodo.clave, clave) > 0 {
+		apilarRecursivo(nodo.izquierdo, clave, funcCmp, pila)
+	} else {
+		apilarRecursivo(nodo.derecho, clave, funcCmp, pila)
+	}
+}
+
+func (abb *abb[K, V]) Altura() int {
+	return abb.raiz.altura
 }
 
 // Retorna el nodo padre y en que lugar insertar un hijo
@@ -49,36 +95,33 @@ func (nodo *nodoAbb[K, V]) ubicar(clave K, ptrPadre *nodoAbb[K, V], num int, fun
 }
 
 func (abb *abb[K, V]) Guardar(clave K, dato V) {
+	var necesitaActualizar bool
+
 	nuevoNodo := crearNodo(clave, dato)
 	if abb.raiz == nil {
 		abb.raiz = nuevoNodo
 		abb.cantidad++
 	}
 	ptr, dir := abb.raiz.ubicar(clave, abb.raiz, 0, abb.funcCmp)
-	if dir == -1 {
-		ptr.izquierdo = nuevoNodo
-		abb.cantidad++
-	} else if dir == 1 {
-		ptr.derecho = nuevoNodo
-		abb.cantidad++
-	} else {
+
+	if dir == 0 {
 		ptr.dato = dato
+	} else {
+		necesitaActualizar = (ptr.izquierdo == nil && ptr.derecho == nil) // si no tiene hijos se actualizan los datos de los padres sucesivos
+		//no sin antes insertar el hijo
+		if dir == -1 {
+			ptr.izquierdo = nuevoNodo
+		} else if dir == 1 {
+			ptr.derecho = nuevoNodo
+		}
+		abb.cantidad++
+		if necesitaActualizar {
+			abb.raiz.actualizarAltura(ptr.clave, abb.funcCmp)
+		}
 	}
 
 	// despues habria que crear una funcion para rotar
 }
-
-// func (abb *abb[K, V]) Pertenece(clave K) bool {
-// 	cont := 0
-// 	abb.Iterar(func(claveB K, dato V) bool {
-// 		if claveB == clave {
-// 			return false
-// 		}
-// 		cont++
-// 		return true
-// 	})
-// 	return cont+1 != abb.cantidad // Si el indice es distinto significa que se corto la iteracion por ende encontro el elemento
-// }
 
 func (abb *abb[K, V]) Pertenece(clave K) bool {
 	ptr, dir := abb.raiz.ubicar(clave, abb.raiz, 0, abb.funcCmp)
