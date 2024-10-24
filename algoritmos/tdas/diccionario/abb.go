@@ -24,6 +24,14 @@ type iterDicAbb[K comparable, V any] struct {
 	pila   pila.Pila[*nodoAbb[K, V]]
 }
 
+type iterDicAbbRango[K comparable, V any] struct {
+	dic    *abb[K, V]
+	actual *nodoAbb[K, V]
+	pila   pila.Pila[*nodoAbb[K, V]]
+	desde  *K
+	hasta  *K
+}
+
 // Hay que hacer todas las funciones otra vez
 
 func CrearABB[K comparable, V any](function_cmp func(K, K) int) DiccionarioOrdenado[K, V] {
@@ -166,10 +174,10 @@ func (nodo *nodoAbb[K, V]) iterar(f func(clave K, dato V) bool) {
 
 func (abb *abb[K, V]) Iterador() IterDiccionario[K, V] {
 	nuevaPila := pila.CrearPilaDinamica[*nodoAbb[K, V]]()
-	nuevaPila.Apilar(abb.raiz)
 	var nodoActual *nodoAbb[K, V]
 	nodoActual = abb.raiz
 	if nodoActual != nil {
+		nuevaPila.Apilar(abb.raiz)
 		for nodoActual.izquierdo != nil {
 			nodoActual = nodoActual.izquierdo
 			nuevaPila.Apilar(nodoActual)
@@ -225,6 +233,37 @@ func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato
 	}
 }
 
-// func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
+func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
+	pila := pila.CrearPilaDinamica[*nodoAbb[K, V]]()
+	apilarRecursivo(abb.raiz, *desde, abb.funcCmp, pila)
+	return &iterDicAbbRango[K, V]{dic: abb, actual: pila.VerTope(), pila: pila, desde: desde, hasta: hasta}
+}
 
-// }
+func (iter *iterDicAbbRango[K, V]) HaySiguiente() bool {
+	return (!iter.pila.EstaVacia())
+}
+
+func (iter *iterDicAbbRango[K, V]) Siguiente() {
+	if iter.HaySiguiente() {
+		nodoActual := iter.pila.Desapilar()
+
+		if iter.dic.funcCmp(nodoActual.clave, *iter.desde) >= 0 {
+			if nodoActual.derecho != nil {
+				iter.pila.Apilar(nodoActual.derecho)
+
+				proximoNodo := nodoActual.derecho
+				for proximoNodo.izquierdo != nil {
+					proximoNodo = proximoNodo.izquierdo
+					iter.pila.Apilar(proximoNodo)
+				}
+			}
+		}
+		if iter.dic.funcCmp(iter.pila.VerTope().clave, *iter.desde) < 0 { // si el nuevo actual es menor que la clave buscada lo desapilo
+			iter.pila.Desapilar()
+		}
+	}
+}
+
+func (iter *iterDicAbbRango[K, V]) VerActual() (K, V) {
+	return iter.pila.VerTope().clave, iter.pila.VerTope().dato
+}

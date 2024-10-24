@@ -185,4 +185,30 @@ func TestAltura(t *testing.T) {
 	require.Equal(t, slice[3], 30)
 	require.Equal(t, slice[4], 33)
 	require.Equal(t, slice[5], 35)
+
+	iter := dic.IteradorRango(&claveInicio, &claveFin)
+	k, v := iter.VerActual()
+	require.Equal(t, k, 15)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 20)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 22)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 30)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 33)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 35)
+
+	require.Equal(t, v, 126)
 }
