@@ -212,3 +212,100 @@ func TestAltura(t *testing.T) {
 
 	require.Equal(t, v, 126)
 }
+
+// Nuevos Tests
+func TestEliminar(t *testing.T) {
+	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
+		if elemento1 < elemento2 {
+			return -1
+		} else if elemento1 > elemento2 {
+			return 1
+		} else {
+			return 0
+		}
+	})
+
+	dic.Guardar(20, 123)
+	dic.Guardar(10, 456)
+	dic.Guardar(30, 789)
+
+	require.Equal(t, dic.Cantidad(), 3)
+	dic.Borrar(10)
+	require.Equal(t, dic.Cantidad(), 2)
+	require.False(t, dic.Pertenece(10))
+
+	dic.Borrar(20)
+	require.Equal(t, dic.Cantidad(), 1)
+	require.False(t, dic.Pertenece(20))
+}
+
+func TestEliminarConDosHijos(t *testing.T) {
+	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
+		if elemento1 < elemento2 {
+			return -1
+		} else if elemento1 > elemento2 {
+			return 1
+		} else {
+			return 0
+		}
+	})
+
+	dic.Guardar(20, 1)
+	dic.Guardar(10, 2)
+	dic.Guardar(30, 3)
+	dic.Guardar(25, 4)
+	dic.Guardar(35, 5)
+
+	require.Equal(t, dic.Cantidad(), 5)
+	dic.Borrar(30)
+	require.Equal(t, dic.Cantidad(), 4)
+	require.True(t, dic.Pertenece(25))
+	require.False(t, dic.Pertenece(30))
+}
+
+func TestBuscarEnArbolGrande(t *testing.T) {
+	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
+		if elemento1 < elemento2 {
+			return -1
+		} else if elemento1 > elemento2 {
+			return 1
+		} else {
+			return 0
+		}
+	})
+
+	for i := 1; i <= 1000; i++ {
+		dic.Guardar(i, i*100)
+	}
+
+	for i := 1; i <= 1000; i++ {
+		require.True(t, dic.Pertenece(i))
+		require.Equal(t, i*100, dic.Obtener(i))
+	}
+
+	require.Equal(t, 1000, dic.Cantidad())
+}
+
+func TestIterarGrandesCantidad(t *testing.T) {
+	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
+		if elemento1 < elemento2 {
+			return -1
+		} else if elemento1 > elemento2 {
+			return 1
+		} else {
+			return 0
+		}
+	})
+
+	for i := 0; i < 1000; i++ {
+		dic.Guardar(i, i*10)
+	}
+
+	count := 0
+	dic.Iterar(func(clave, dato int) bool {
+		count++
+		return true
+	})
+
+	require.Equal(t, count, 1000)
+}
