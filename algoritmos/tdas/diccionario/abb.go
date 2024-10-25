@@ -48,17 +48,6 @@ func crearNodo[K comparable, V any](clave K, dato V) *nodoAbb[K, V] {
 }
 
 /*
-Precondiciones: num1 y num2 deben ser enteros.
-Postcondiciones: Se devuelve el mayor de los dos números enteros proporcionados.
-*/
-func mayor(num1, num2 int) int {
-	if num1 > num2 {
-		return num1
-	}
-	return num2
-}
-
-/*
 Precondiciones: nodo debe ser un puntero a un nodo válido, clave debe ser de tipo K, y funcCmp debe ser una función de comparación válida. pila debe ser una pila de nodos.
 Postcondiciones: Los nodos en la ruta hacia la clave se apilan en pila.
 */
@@ -79,17 +68,17 @@ Precondiciones: nodo no debe ser nulo y funcCmp debe ser una función de compara
 Postcondiciones: Se devuelve el nodo padre donde debería insertarse la clave y una dirección indicando si se debe ir a la izquierda, derecha o si la clave ya existe.
 */
 // Retorna el nodo padre y en que lugar insertar un hijo
-func (nodo *nodoAbb[K, V]) ubicar(clave K, ptrPadre *nodoAbb[K, V], num int, funcCmp func(K, K) int) (*nodoAbb[K, V], int) {
+func (nodo *nodoAbb[K, V]) ubicar(clave K, ptrPadre *nodoAbb[K, V], funcCmp func(K, K) int) *nodoAbb[K, V] {
 	if nodo == nil {
-		return ptrPadre, num
+		return ptrPadre
 	}
-	if nodo.clave == clave {
-		return nodo, 0
+	if funcCmp(nodo.clave, clave) == 0 {
+		return nodo
 	}
 	if funcCmp(nodo.clave, clave) > 0 { // Se supone que la comparacion devuelve un valor positivo si el primero es mas grande
-		return nodo.izquierdo.ubicar(clave, nodo, -1, funcCmp)
+		return nodo.izquierdo.ubicar(clave, nodo, funcCmp)
 	} else {
-		return nodo.derecho.ubicar(clave, nodo, 1, funcCmp)
+		return nodo.derecho.ubicar(clave, nodo, funcCmp)
 	}
 }
 
@@ -103,21 +92,19 @@ func (abb *abb[K, V]) Guardar(clave K, dato V) {
 	if abb.raiz == nil {
 		abb.raiz = nuevoNodo
 		abb.cantidad++
-	}
-	ptr, dir := abb.raiz.ubicar(clave, abb.raiz, 0, abb.funcCmp)
-
-	if dir == 0 {
-		ptr.dato = dato
 	} else {
-		if dir == -1 {
-			ptr.izquierdo = nuevoNodo
-		} else if dir == 1 {
-			ptr.derecho = nuevoNodo
+		ptr := abb.raiz.ubicar(clave, abb.raiz, abb.funcCmp)
+		if abb.funcCmp(ptr.clave, clave) == 0 {
+			ptr.dato = dato
+		} else {
+			if abb.funcCmp(ptr.clave, clave) > 0 {
+				ptr.izquierdo = nuevoNodo
+			} else {
+				ptr.derecho = nuevoNodo
+			}
+			abb.cantidad++
 		}
-		abb.cantidad++
 	}
-
-	// despues habria que crear una funcion para rotar
 }
 
 /*
@@ -125,9 +112,11 @@ Precondiciones: abb debe ser un puntero a un ABB válido y clave debe ser de tip
 Postcondiciones: Se devuelve true si la clave está en el árbol; de lo contrario, devuelve false.
 */
 func (abb *abb[K, V]) Pertenece(clave K) bool {
-	ptr, dir := abb.raiz.ubicar(clave, abb.raiz, 0, abb.funcCmp)
-	return ptr != nil && dir == 0 // Si al ubicarlo el ptr no es nulo y la direccion es 0
-	// significa que ese puntero es el que tiene la clave buscada
+	ptr := abb.raiz.ubicar(clave, abb.raiz, abb.funcCmp)
+	if ptr == nil {
+		return false
+	}
+	return abb.funcCmp(ptr.clave, clave) == 0
 }
 
 /*
@@ -135,10 +124,12 @@ Precondiciones: abb debe ser un puntero a un ABB válido y clave debe ser de tip
 Postcondiciones: Se devuelve el dato asociado a la clave si existe. Si la clave no está, se lanza un pánico.
 */
 func (abb *abb[K, V]) Obtener(clave K) V {
-	ptr, dir := abb.raiz.ubicar(clave, abb.raiz, 0, abb.funcCmp)
+	ptr := abb.raiz.ubicar(clave, abb.raiz, abb.funcCmp)
 
-	if ptr != nil && dir == 0 {
-		return (*ptr).dato
+	if ptr != nil {
+		if abb.funcCmp(ptr.clave, clave) == 0 {
+			return ptr.dato
+		}
 	}
 	panic("NO encontrado")
 }
