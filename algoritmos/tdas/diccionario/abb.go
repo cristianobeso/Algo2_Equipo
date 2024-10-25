@@ -332,6 +332,11 @@ Precondiciones: iter debe ser un puntero a un iterador de rango válido.
 Postcondiciones: Se devuelve true si hay un siguiente elemento en la pila; de lo contrario, false.
 */
 func (iter *iterDicAbbRango[K, V]) HaySiguiente() bool {
+	if iter.dic.funcCmp(*iter.hasta, iter.pila.VerTope().clave) < 0 {
+		for !iter.pila.EstaVacia() {
+			iter.pila.Desapilar()
+		}
+	}
 	return (!iter.pila.EstaVacia())
 }
 
@@ -342,7 +347,6 @@ Postcondiciones: Se mueve al siguiente elemento en el iterador de rango, actuali
 func (iter *iterDicAbbRango[K, V]) Siguiente() {
 	if iter.HaySiguiente() {
 		nodoActual := iter.pila.Desapilar()
-
 		if iter.dic.funcCmp(nodoActual.clave, *iter.desde) >= 0 {
 			if nodoActual.derecho != nil {
 				iter.pila.Apilar(nodoActual.derecho)
@@ -354,7 +358,7 @@ func (iter *iterDicAbbRango[K, V]) Siguiente() {
 				}
 			}
 		}
-		if iter.dic.funcCmp(iter.pila.VerTope().clave, *iter.desde) < 0 { // si el nuevo actual es menor que la clave buscada lo desapilo
+		for iter.dic.funcCmp(iter.pila.VerTope().clave, *iter.desde) < 0 {
 			iter.pila.Desapilar()
 		}
 	}
