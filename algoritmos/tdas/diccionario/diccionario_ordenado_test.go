@@ -134,7 +134,6 @@ func TestDiccionarioOrden(t *testing.T) {
 }
 
 func TestAltura(t *testing.T) {
-	// esta prueba se hace sabiendo que el arbol no esta valanceado
 	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
 		if elemento1 < elemento2 {
 			return -1
@@ -146,29 +145,17 @@ func TestAltura(t *testing.T) {
 	})
 
 	dic.Guardar(20, 123)
-	require.Equal(t, dic.Altura(), 1) //la primitiva altura fue creada para verificar la altura de los nodos
-
 	dic.Guardar(10, 456)
-	require.Equal(t, dic.Altura(), 2)
 	dic.Guardar(15, 789)
-	require.Equal(t, dic.Altura(), 3)
 	dic.Guardar(5, 159)
-	require.Equal(t, dic.Altura(), 3)
 	dic.Guardar(3, 753)
-	require.Equal(t, dic.Altura(), 4)
 	dic.Guardar(6, 486)
-	require.Equal(t, dic.Altura(), 4)
 
 	dic.Guardar(30, 426)
-	require.Equal(t, dic.Altura(), 4)
 	dic.Guardar(40, 423)
-	require.Equal(t, dic.Altura(), 4)
 	dic.Guardar(35, 126)
-	require.Equal(t, dic.Altura(), 4)
 	dic.Guardar(22, 781)
-	require.Equal(t, dic.Altura(), 4)
 	dic.Guardar(33, 481)
-	require.Equal(t, dic.Altura(), 5)
 
 	//prueba del iterador por rango
 

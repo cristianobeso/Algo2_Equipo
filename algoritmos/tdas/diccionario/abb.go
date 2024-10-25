@@ -9,7 +9,6 @@ type nodoAbb[K comparable, V any] struct {
 	derecho   *nodoAbb[K, V]
 	clave     K
 	dato      V
-	altura    int
 }
 
 type abb[K comparable, V any] struct {
@@ -45,7 +44,7 @@ Precondiciones: clave y dato deben ser de los tipos correspondientes K y V.
 Postcondiciones: Se devuelve un puntero a un nuevo nodo de tipo nodoAbb con la clave y el dato proporcionados, y altura inicial de 1.
 */
 func crearNodo[K comparable, V any](clave K, dato V) *nodoAbb[K, V] {
-	return &nodoAbb[K, V]{izquierdo: nil, derecho: nil, clave: clave, dato: dato, altura: 1}
+	return &nodoAbb[K, V]{izquierdo: nil, derecho: nil, clave: clave, dato: dato}
 }
 
 /*
@@ -57,32 +56,6 @@ func mayor(num1, num2 int) int {
 		return num1
 	}
 	return num2
-}
-
-/*
-Precondiciones: nodo no debe ser nulo y funcCmp debe ser una función válida de comparación.
-Postcondiciones: La altura de los nodos en la ruta desde nodo hasta la raíz se actualiza correctamente.
-*/
-// actualiza hasta el padre del ultimo hijo insertado
-func (nodo *nodoAbb[K, V]) actualizarAltura(clave K, funcCmp func(K, K) int) {
-	pila := pila.CrearPilaDinamica[*nodoAbb[K, V]]()
-	apilarRecursivo(nodo, clave, funcCmp, pila)
-
-	var alturaIzq, alturaDer int
-	for !pila.EstaVacia() {
-		nodoActual := pila.Desapilar()
-		if nodoActual.izquierdo == nil {
-			alturaIzq = 0
-		} else {
-			alturaIzq = nodoActual.izquierdo.altura
-		}
-		if nodoActual.derecho == nil {
-			alturaDer = 0
-		} else {
-			alturaDer = nodoActual.derecho.altura
-		}
-		(*nodoActual).altura = mayor(alturaIzq, alturaDer) + 1
-	}
 }
 
 /*
@@ -99,14 +72,6 @@ func apilarRecursivo[K comparable, V any](nodo *nodoAbb[K, V], clave K, funcCmp 
 	} else {
 		apilarRecursivo(nodo.derecho, clave, funcCmp, pila)
 	}
-}
-
-/*
-Precondiciones: abb debe ser un puntero a un ABB válido.
-Postcondiciones: Se devuelve la altura del árbol.
-*/
-func (abb *abb[K, V]) Altura() int {
-	return abb.raiz.altura
 }
 
 /*
@@ -133,7 +98,6 @@ Precondiciones: abb debe ser un puntero a un ABB válido, clave debe ser de tipo
 Postcondiciones: La clave y el dato se insertan en el árbol. Si la clave ya existe, se actualiza el dato. Se incrementa la cantidad de elementos.
 */
 func (abb *abb[K, V]) Guardar(clave K, dato V) {
-	var necesitaActualizar bool
 
 	nuevoNodo := crearNodo(clave, dato)
 	if abb.raiz == nil {
@@ -145,17 +109,12 @@ func (abb *abb[K, V]) Guardar(clave K, dato V) {
 	if dir == 0 {
 		ptr.dato = dato
 	} else {
-		necesitaActualizar = (ptr.izquierdo == nil && ptr.derecho == nil) // si no tiene hijos se actualizan los datos de los padres sucesivos
-		//no sin antes insertar el hijo
 		if dir == -1 {
 			ptr.izquierdo = nuevoNodo
 		} else if dir == 1 {
 			ptr.derecho = nuevoNodo
 		}
 		abb.cantidad++
-		if necesitaActualizar {
-			abb.raiz.actualizarAltura(ptr.clave, abb.funcCmp)
-		}
 	}
 
 	// despues habria que crear una funcion para rotar
