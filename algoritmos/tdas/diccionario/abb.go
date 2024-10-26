@@ -181,10 +181,10 @@ func borrarRecursivo[K comparable, V any](nodo *nodoAbb[K, V], clave K, funcCmp 
 		}
 
 		// nodo con un hijo
-		if nodo.izquierdo == nil {
+		if nodo.izquierdo == nil && nodo.derecho != nil {
 			return nodo.derecho, nodo
 		}
-		if nodo.derecho == nil {
+		if nodo.derecho == nil && nodo.izquierdo != nil {
 			return nodo.izquierdo, nodo
 		}
 
@@ -194,6 +194,7 @@ func borrarRecursivo[K comparable, V any](nodo *nodoAbb[K, V], clave K, funcCmp 
 		nodo.dato = sucesor.dato
 		nodo.derecho, _ = borrarRecursivo(nodo.derecho, sucesor.clave, funcCmp)
 		return nodo, sucesor
+
 	}
 }
 
@@ -294,6 +295,8 @@ func (iter *iterDicAbb[K, V]) Siguiente() {
 			}
 			iter.actual = nodoActual
 		}
+	} else {
+		panic("El iterador termino de iterar")
 	}
 }
 
@@ -302,6 +305,9 @@ Precondiciones:
 Postcondiciones:
 */
 func (iter *iterDicAbb[K, V]) VerActual() (K, V) {
+	if iter.pila.EstaVacia() {
+		panic("El iterador termino de iterar")
+	}
 	return iter.pila.VerTope().clave, iter.pila.VerTope().dato
 }
 
@@ -399,6 +405,9 @@ func (iter *iterDicAbbRango[K, V]) HaySiguiente() bool {
 		if iter.hasta != nil {
 			if iter.dic.funcCmp(*iter.hasta, iter.pila.VerTope().clave) < 0 {
 				iter.pila.Apilar(nodo)
+				for !iter.pila.EstaVacia() {
+					iter.pila.Desapilar()
+				}
 				return false
 			}
 		}
@@ -440,6 +449,8 @@ func (iter *iterDicAbbRango[K, V]) Siguiente() {
 				}
 			}
 		}
+	} else {
+		panic("El iterador termino de iterar")
 	}
 }
 
@@ -448,5 +459,8 @@ Precondiciones: El iterador debe estar inicializado y no debe estar vacío. Debe
 Postcondiciones: Se devuelve la clave y el valor del elemento actual en el iterador. No se produce modificación en el estado del iterador.
 */
 func (iter *iterDicAbbRango[K, V]) VerActual() (K, V) {
+	if iter.pila.EstaVacia() {
+		panic("El iterador termino de iterar")
+	}
 	return iter.pila.VerTope().clave, iter.pila.VerTope().dato
 }
