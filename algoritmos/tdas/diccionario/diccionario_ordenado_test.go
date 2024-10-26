@@ -432,6 +432,39 @@ func TestEliminarConDosHijos(t *testing.T) {
 	require.Equal(t, v, 7)
 
 	require.False(t, iter.HaySiguiente())
+
+	dic.Guardar(30, 3)
+	require.True(t, dic.Pertenece(30))
+
+	iterador := dic.Iterador()
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 10)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 20)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 22)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 23)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 25)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 30)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 35)
+	require.Equal(t, v, 7)
+
 }
 
 func TestBuscarEnArbolGrande(t *testing.T) {
