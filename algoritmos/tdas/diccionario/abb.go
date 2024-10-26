@@ -134,7 +134,7 @@ func (abb *abb[K, V]) Obtener(clave K) V {
 			return ptr.dato
 		}
 	}
-	panic("NO encontrado")
+	panic("La clave no pertenece al diccionario")
 }
 
 /*
@@ -143,13 +143,13 @@ Postcondiciones: Se elimina el nodo asociado a la clave. Si la clave no existe, 
 */
 func (abb *abb[K, V]) Borrar(clave K) V {
 	if abb.raiz == nil {
-		panic("Clave no encontrada")
+		panic("La clave no pertenece al diccionario")
 	}
 
 	var borrado *nodoAbb[K, V]
 	abb.raiz, borrado = borrarRecursivo(abb.raiz, clave, abb.funcCmp)
 	if borrado == nil {
-		panic("Clave no encontrada")
+		panic("La clave no pertenece al diccionario")
 	}
 
 	abb.cantidad--
@@ -167,9 +167,13 @@ func borrarRecursivo[K comparable, V any](nodo *nodoAbb[K, V], clave K, funcCmp 
 
 	cmp := funcCmp(clave, nodo.clave)
 	if cmp < 0 {
-		nodo.izquierdo, _ = borrarRecursivo(nodo.izquierdo, clave, funcCmp)
+		var borrado *nodoAbb[K, V]
+		nodo.izquierdo, borrado = borrarRecursivo(nodo.izquierdo, clave, funcCmp)
+		return nodo, borrado
 	} else if cmp > 0 {
-		nodo.derecho, _ = borrarRecursivo(nodo.derecho, clave, funcCmp)
+		var borrado *nodoAbb[K, V]
+		nodo.derecho, borrado = borrarRecursivo(nodo.derecho, clave, funcCmp)
+		return nodo, borrado
 	} else {
 		// nodo sin hijos
 		if nodo.izquierdo == nil && nodo.derecho == nil {
@@ -189,9 +193,8 @@ func borrarRecursivo[K comparable, V any](nodo *nodoAbb[K, V], clave K, funcCmp 
 		nodo.clave = sucesor.clave
 		nodo.dato = sucesor.dato
 		nodo.derecho, _ = borrarRecursivo(nodo.derecho, sucesor.clave, funcCmp)
+		return nodo, sucesor
 	}
-
-	return nodo, nodo
 }
 
 /*
