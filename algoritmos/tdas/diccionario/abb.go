@@ -207,72 +207,90 @@ func (nodo *nodoAbb[K, V]) buscarPadre(ptrPadre *nodoAbb[K, V], clave K, funcCmp
 		return ptrPadre
 	}
 	if funcCmp(nodo.clave, clave) > 0 { // Se supone que la comparacion devuelve un valor positivo si el primero es mas grande
-		return nodo.izquierdo.ubicar(clave, nodo, funcCmp)
+		return nodo.izquierdo.buscarPadre(nodo, clave, funcCmp)
 	} else {
-		return nodo.derecho.ubicar(clave, nodo, funcCmp)
+		return nodo.derecho.buscarPadre(nodo, clave, funcCmp)
 	}
 }
 
 func (nodo *nodoAbb[K, V]) borrar(clave K, funcCmp func(K, K) int) V {
 	ptrPadre := nodo.buscarPadre(nodo, clave, funcCmp)
-	if funcCmp(ptrPadre.clave, clave) == 0 {
-		valorAux := ptrPadre.dato
-		ptrPadre = nil
-		return valorAux
-	} else {
-		var ptrHijo *nodoAbb[K, V]
-		if funcCmp(ptrPadre.clave, clave) > 0 { // si el padre es mayor a la clave del hijo a borrar, implica que este hijo esta a su izquierda
-			ptrHijo = ptrPadre.izquierdo
-		}
-		if funcCmp(ptrPadre.clave, clave) < 0 {
-			ptrHijo = ptrPadre.derecho
-		}
-		// sin hijo
-		if ptrHijo.izquierdo == nil && ptrHijo.derecho == nil {
-			if funcCmp(ptrPadre.clave, clave) > 0 {
-				ptrPadre.izquierdo = nil
-				return ptrHijo.dato
-			}
-			ptrPadre.derecho = nil
-			return ptrHijo.dato
-		}
-		// un hijo
-		if ptrHijo.izquierdo == nil && ptrHijo.derecho != nil {
-			if funcCmp(ptrPadre.clave, clave) > 0 {
-				ptrPadre.izquierdo = ptrHijo.derecho
-				return ptrHijo.dato
-			}
-			ptrPadre.derecho = ptrHijo.derecho
-			return ptrHijo.dato
-		}
-
-		if ptrHijo.izquierdo != nil && ptrHijo.derecho == nil {
-			if funcCmp(ptrPadre.clave, clave) > 0 {
-				ptrPadre.izquierdo = ptrHijo.izquierdo
-				return ptrHijo.dato
-			}
-			ptrPadre.derecho = ptrHijo.izquierdo
-			return ptrHijo.dato
-		}
-		// dos hijos
-		sucesor := buscarMin(ptrHijo)
-		ptrHijo.borrar(sucesor.clave, funcCmp) //borra al sucesor
-		valorAux := ptrHijo.dato
-		ptrHijo.clave = sucesor.clave
-		ptrHijo.dato = sucesor.dato
-		return valorAux
+	// if funcCmp(ptrPadre.clave, clave) == 0 {
+	// 	valorAux := ptrPadre.dato
+	// 	ptrPadre = nil
+	// 	return valorAux
+	// } else {
+	var ptrHijo *nodoAbb[K, V]
+	if funcCmp(ptrPadre.clave, clave) > 0 { // si el padre es mayor a la clave del hijo a borrar, implica que este hijo esta a su izquierda
+		ptrHijo = ptrPadre.izquierdo
 	}
+	if funcCmp(ptrPadre.clave, clave) < 0 {
+		ptrHijo = ptrPadre.derecho
+	}
+	// sin hijo
+	if ptrHijo.izquierdo == nil && ptrHijo.derecho == nil {
+		if funcCmp(ptrPadre.clave, clave) > 0 {
+			ptrPadre.izquierdo = nil
+			return ptrHijo.dato
+		}
+		ptrPadre.derecho = nil
+		return ptrHijo.dato
+	}
+	// un hijo
+	if ptrHijo.izquierdo == nil && ptrHijo.derecho != nil {
+		if funcCmp(ptrPadre.clave, clave) > 0 {
+			ptrPadre.izquierdo = ptrHijo.derecho
+			return ptrHijo.dato
+		}
+		ptrPadre.derecho = ptrHijo.derecho
+		return ptrHijo.dato
+	}
+
+	if ptrHijo.izquierdo != nil && ptrHijo.derecho == nil {
+		if funcCmp(ptrPadre.clave, clave) > 0 {
+			ptrPadre.izquierdo = ptrHijo.izquierdo
+			return ptrHijo.dato
+		}
+		ptrPadre.derecho = ptrHijo.izquierdo
+		return ptrHijo.dato
+	}
+	// dos hijos
+	sucesor := buscarMin(ptrHijo.derecho)
+	ptrPadre.borrar(sucesor.clave, funcCmp) //borra al sucesor
+	valorAux := ptrHijo.dato
+	ptrHijo.clave = sucesor.clave
+	ptrHijo.dato = sucesor.dato
+	return valorAux
+	//}
 }
 
 func (abb *abb[K, V]) Borrar(clave K) V {
 	if abb.Pertenece(clave) {
 		ptrPadre := abb.raiz.buscarPadre(abb.raiz, clave, abb.funcCmp)
 		abb.cantidad--
-		if abb.funcCmp(ptrPadre.clave, clave) == 0 { // esto solo sucede cuando hay un unico elemento
-			abb.raiz = nil
-		} else {
-			return abb.raiz.borrar(clave, abb.funcCmp)
+		if abb.funcCmp(ptrPadre.clave, clave) == 0 {
+
+			if ptrPadre.izquierdo == nil && ptrPadre.derecho == nil {
+				abb.raiz = nil
+				return ptrPadre.dato
+			}
+			// un hijo
+			if ptrPadre.izquierdo == nil && ptrPadre.derecho != nil {
+				abb.raiz = ptrPadre.derecho
+				return ptrPadre.dato
+			}
+			if ptrPadre.izquierdo != nil && ptrPadre.derecho == nil {
+				abb.raiz = ptrPadre.izquierdo
+				return ptrPadre.dato
+			}
+			sucesor := buscarMin(ptrPadre.derecho)
+			ptrPadre.borrar(sucesor.clave, abb.funcCmp) //borra al sucesor
+			valorAux := ptrPadre.dato
+			ptrPadre.clave = sucesor.clave
+			ptrPadre.dato = sucesor.dato
+			return valorAux
 		}
+		return abb.raiz.borrar(clave, abb.funcCmp)
 	}
 	panic("La clave no pertenece al diccionario")
 }
