@@ -468,6 +468,96 @@ func TestEliminarConDosHijos(t *testing.T) {
 
 }
 
+func TestEliminarConDosHijos2(t *testing.T) {
+	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
+		if elemento1 < elemento2 {
+			return -1
+		} else if elemento1 > elemento2 {
+			return 1
+		} else {
+			return 0
+		}
+	})
+
+	dic.Guardar(20, 1)
+	dic.Guardar(10, 2)
+	dic.Guardar(30, 3)
+	dic.Guardar(25, 4)
+	dic.Guardar(22, 5)
+	dic.Guardar(23, 6)
+	dic.Guardar(35, 7)
+
+	require.Equal(t, dic.Cantidad(), 7)
+	dic.Borrar(30)
+	require.Equal(t, dic.Cantidad(), 6)
+	require.True(t, dic.Pertenece(25))
+	require.False(t, dic.Pertenece(30))
+
+	iter := dic.Iterador()
+	k, v := iter.VerActual()
+	require.Equal(t, k, 10)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 20)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 22)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 23)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 25)
+	iter.Siguiente()
+
+	k, v = iter.VerActual()
+	require.Equal(t, k, 35)
+	require.Equal(t, v, 7)
+
+	// iterador ha llega al final
+	require.False(t, iter.HaySiguiente())
+
+	// Insertar nuevamente el elemento eliminado
+	dic.Guardar(30, 3)
+	require.True(t, dic.Pertenece(30))
+
+	iterador := dic.Iterador()
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 10)
+	iterador.Siguiente()
+
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 20)
+	iterador.Siguiente()
+
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 22)
+	iterador.Siguiente()
+
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 23)
+	iterador.Siguiente()
+
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 25)
+	iterador.Siguiente()
+
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 30)
+	iterador.Siguiente()
+
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 35)
+	require.Equal(t, v, 7)
+
+	// ver si iterador llega al final
+	require.False(t, iterador.HaySiguiente())
+}
+
 func TestBuscarEnArbolGrande(t *testing.T) {
 	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
 		if elemento1 < elemento2 {
