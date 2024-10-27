@@ -137,67 +137,6 @@ func (abb *abb[K, V]) Obtener(clave K) V {
 	panic("La clave no pertenece al diccionario")
 }
 
-/*
-Precondiciones: abb debe ser un puntero a un ABB válido y clave debe ser de tipo K.
-Postcondiciones: Se elimina el nodo asociado a la clave. Si la clave no existe, se lanza un pánico. Se decrementa la cantidad de elementos.
-*/
-func (abb *abb[K, V]) Borrar1(clave K) V {
-	if abb.raiz == nil {
-		panic("La clave no pertenece al diccionario")
-	}
-
-	var borrado *nodoAbb[K, V]
-	abb.raiz, borrado = borrarRecursivo(abb.raiz, clave, abb.funcCmp)
-	if borrado == nil {
-		panic("La clave no pertenece al diccionario")
-	}
-
-	abb.cantidad--
-	return borrado.dato
-}
-
-/*
-Precondiciones: nodo debe ser un puntero a un nodo válido y funcCmp debe ser una función de comparación válida.
-Postcondiciones: Se devuelve el nuevo nodo tras la eliminación y el nodo eliminado.
-*/
-func borrarRecursivo[K comparable, V any](nodo *nodoAbb[K, V], clave K, funcCmp func(K, K) int) (*nodoAbb[K, V], *nodoAbb[K, V]) {
-	if nodo == nil {
-		return nil, nil
-	}
-
-	cmp := funcCmp(clave, nodo.clave)
-	if cmp < 0 {
-		var borrado *nodoAbb[K, V]
-		nodo.izquierdo, borrado = borrarRecursivo(nodo.izquierdo, clave, funcCmp)
-		return nodo, borrado
-	} else if cmp > 0 {
-		var borrado *nodoAbb[K, V]
-		nodo.derecho, borrado = borrarRecursivo(nodo.derecho, clave, funcCmp)
-		return nodo, borrado
-	} else {
-		// nodo sin hijos
-		if nodo.izquierdo == nil && nodo.derecho == nil {
-			return nil, nodo
-		}
-
-		// nodo con un hijo
-		if nodo.izquierdo == nil && nodo.derecho != nil {
-			return nodo.derecho, nodo
-		}
-		if nodo.derecho == nil && nodo.izquierdo != nil {
-			return nodo.izquierdo, nodo
-		}
-
-		// nodo con dos hijos, sucesor inorder
-		sucesor := buscarMin(nodo.derecho)
-		nodo.clave = sucesor.clave
-		nodo.dato = sucesor.dato
-		nodo.derecho, _ = borrarRecursivo(nodo.derecho, sucesor.clave, funcCmp)
-		return nodo, sucesor
-
-	}
-}
-
 /*       ***********        nuevas funciones para  borrar        ************       */
 func (nodo *nodoAbb[K, V]) buscarPadre(ptrPadre *nodoAbb[K, V], clave K, funcCmp func(K, K) int) *nodoAbb[K, V] {
 	if nodo == nil { // se supone que nunca sera nil
@@ -215,11 +154,6 @@ func (nodo *nodoAbb[K, V]) buscarPadre(ptrPadre *nodoAbb[K, V], clave K, funcCmp
 
 func (nodo *nodoAbb[K, V]) borrar(clave K, funcCmp func(K, K) int) V {
 	ptrPadre := nodo.buscarPadre(nodo, clave, funcCmp)
-	// if funcCmp(ptrPadre.clave, clave) == 0 {
-	// 	valorAux := ptrPadre.dato
-	// 	ptrPadre = nil
-	// 	return valorAux
-	// } else {
 	var ptrHijo *nodoAbb[K, V]
 	if funcCmp(ptrPadre.clave, clave) > 0 { // si el padre es mayor a la clave del hijo a borrar, implica que este hijo esta a su izquierda
 		ptrHijo = ptrPadre.izquierdo
@@ -261,7 +195,6 @@ func (nodo *nodoAbb[K, V]) borrar(clave K, funcCmp func(K, K) int) V {
 	ptrHijo.clave = sucesor.clave
 	ptrHijo.dato = sucesor.dato
 	return valorAux
-	//}
 }
 
 func (abb *abb[K, V]) Borrar(clave K) V {

@@ -377,9 +377,9 @@ func TestEliminar(t *testing.T) {
 	require.Equal(t, dic.Cantidad(), 2)
 	require.False(t, dic.Pertenece(10))
 	require.True(t, dic.Pertenece(20))
-	//dic.Borrar(20)
-	// require.Equal(t, dic.Cantidad(), 1)
-	// require.False(t, dic.Pertenece(20))
+	dic.Borrar(20)
+	require.Equal(t, dic.Cantidad(), 1)
+	require.False(t, dic.Pertenece(20))
 }
 
 func TestEliminarConDosHijos(t *testing.T) {
@@ -407,64 +407,66 @@ func TestEliminarConDosHijos(t *testing.T) {
 	require.True(t, dic.Pertenece(25))
 	require.False(t, dic.Pertenece(30))
 
-	// iter := dic.Iterador()
-	// k, v := iter.VerActual()
-	// require.Equal(t, k, 10)
-	// iter.Siguiente()
+	iter := dic.Iterador()
+	k, v := iter.VerActual()
+	require.Equal(t, k, 10)
+	iter.Siguiente()
 
-	// k, v = iter.VerActual()
-	// require.Equal(t, k, 20)
-	// iter.Siguiente()
+	k, v = iter.VerActual()
+	require.Equal(t, k, 20)
+	iter.Siguiente()
 
-	// k, v = iter.VerActual()
-	// require.Equal(t, k, 22)
-	// iter.Siguiente()
+	k, v = iter.VerActual()
+	require.Equal(t, k, 22)
+	iter.Siguiente()
 
-	// k, v = iter.VerActual()
-	// require.Equal(t, k, 23)
-	// iter.Siguiente()
+	k, v = iter.VerActual()
+	require.Equal(t, k, 23)
+	iter.Siguiente()
 
-	// k, v = iter.VerActual()
-	// require.Equal(t, k, 25)
-	// iter.Siguiente()
+	k, v = iter.VerActual()
+	require.Equal(t, k, 25)
+	iter.Siguiente()
 
-	// k, v = iter.VerActual()
-	// require.Equal(t, k, 35)
-	// require.Equal(t, v, 7)
+	k, v = iter.VerActual()
+	require.Equal(t, k, 35)
+	require.Equal(t, v, 7)
 
-	// require.False(t, iter.HaySiguiente())
+	require.False(t, iter.HaySiguiente())
 
-	// dic.Guardar(30, 3)
-	// require.True(t, dic.Pertenece(30))
+	dic.Guardar(30, 3)
+	require.True(t, dic.Pertenece(30))
 
-	// iterador := dic.Iterador()
-	// k, v = iterador.VerActual()
-	// require.Equal(t, k, 10)
-	// iter.Siguiente()
+	iterador := dic.Iterador()
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 10)
+	iterador.Siguiente()
 
-	// k, v = iter.VerActual()
-	// require.Equal(t, k, 20)
-	// iter.Siguiente()
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 20)
+	iterador.Siguiente()
 
-	// k, v = iter.VerActual()
-	// require.Equal(t, k, 22)
-	// iter.Siguiente()
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 22)
+	iterador.Siguiente()
 
-	// k, v = iter.VerActual()
-	// require.Equal(t, k, 23)
-	// iter.Siguiente()
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 23)
+	iterador.Siguiente()
 
-	// k, v = iter.VerActual()
-	// require.Equal(t, k, 25)
-	// iter.Siguiente()
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 25)
+	iterador.Siguiente()
 
-	// k, v = iter.VerActual()
-	// require.Equal(t, k, 30)
-	// iter.Siguiente()
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 30)
+	iterador.Siguiente()
 
-	// k, v = iter.VerActual()
-	// require.Equal(t, k, 35)
-	// require.Equal(t, v, 7)
+	k, v = iterador.VerActual()
+	require.Equal(t, k, 35)
+	require.Equal(t, v, 7)
+
+	require.False(t, iterador.HaySiguiente())
 
 }
 
