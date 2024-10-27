@@ -346,55 +346,80 @@ Precondiciones: iter debe ser un puntero a un iterador válido y no debe estar v
 Postcondiciones: Se devuelve la clave y el dato del nodo actual en el iterador.
 */
 func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato V) bool) {
-	pila := pila.CrearPilaDinamica[*nodoAbb[K, V]]()
-	if desde != nil {
-		apilarRecursivo(abb.raiz, *desde, abb.funcCmp, pila)
-	} else {
-		var nodo *nodoAbb[K, V]
-		nodo = abb.raiz
-		if nodo != nil {
-			pila.Apilar(abb.raiz)
-			for nodo.izquierdo != nil {
-				nodo = nodo.izquierdo
-				pila.Apilar(nodo)
-			}
-		}
+	if abb == nil {
+		return
 	}
 
-	for !pila.EstaVacia() {
-		nodoActual := pila.Desapilar()
-		if hasta != nil {
-			if abb.funcCmp(*hasta, nodoActual.clave) < 0 {
-				return
-			}
-		}
+	if desde == nil && hasta == nil { // si no tiene limites se iterar con el iterador interno sin rangos
+		abb.Iterar(visitar)
+	} else {
 		if desde != nil {
-			if abb.funcCmp(nodoActual.clave, *desde) >= 0 {
-				visitar(nodoActual.clave, nodoActual.dato)
-				if nodoActual.derecho != nil {
-					pila.Apilar(nodoActual.derecho)
-					//quizas se pueda usar la variable nodoActual...
-					proximoNodo := nodoActual.derecho
-					for proximoNodo.izquierdo != nil {
-						proximoNodo = proximoNodo.izquierdo
-						pila.Apilar(proximoNodo)
-					}
-				}
+			if abb.funcCmp(*desde, abb.raiz.clave) < 0 {
+				abb.raiz.izquierdo.iterarRango(visitar, abb.funcCmp, desde, hasta)
 			}
 		} else {
-			visitar(nodoActual.clave, nodoActual.dato) // cambiar despues
-			if nodoActual.derecho != nil {
-				pila.Apilar(nodoActual.derecho)
-				//quizas se pueda usar la variable nodoActual...
-				proximoNodo := nodoActual.derecho
-				for proximoNodo.izquierdo != nil {
-					proximoNodo = proximoNodo.izquierdo
-					pila.Apilar(proximoNodo)
-				}
+			abb.raiz.izquierdo.iterarRango(visitar, abb.funcCmp, desde, hasta)
+		}
+
+		if desde != nil && hasta == nil {
+			if abb.funcCmp(*desde, abb.raiz.clave) < 0 {
+				visitar(abb.raiz.clave, abb.raiz.dato)
+			}
+		} else if desde == nil && hasta != nil {
+			if abb.funcCmp(abb.raiz.clave, *hasta) < 0 {
+				visitar(abb.raiz.clave, abb.raiz.dato)
+			}
+		} else {
+			if (abb.funcCmp(*desde, abb.raiz.clave) < 0) && (abb.funcCmp(abb.raiz.clave, *hasta) < 0) {
+				visitar(abb.raiz.clave, abb.raiz.dato)
 			}
 		}
 
+		if hasta != nil {
+			if abb.funcCmp(abb.raiz.clave, *hasta) < 0 {
+				abb.raiz.derecho.iterarRango(visitar, abb.funcCmp, desde, hasta)
+			}
+		} else {
+			abb.raiz.derecho.iterarRango(visitar, abb.funcCmp, desde, hasta)
+		}
 	}
+}
+
+func (nodo *nodoAbb[K, V]) iterarRango(f func(clave K, dato V) bool, funcCmp func(clave1 K, clave2 K) int, desde *K, hasta *K) {
+	if nodo == nil {
+		return
+	}
+
+	if desde != nil {
+		if funcCmp(*desde, nodo.clave) < 0 {
+			nodo.izquierdo.iterarRango(f, funcCmp, desde, hasta)
+		}
+	} else {
+		nodo.izquierdo.iterarRango(f, funcCmp, desde, hasta)
+	}
+
+	if desde != nil && hasta == nil {
+		if funcCmp(*desde, nodo.clave) < 0 {
+			f(nodo.clave, nodo.dato)
+		}
+	} else if desde == nil && hasta != nil {
+		if funcCmp(nodo.clave, *hasta) < 0 {
+			f(nodo.clave, nodo.dato)
+		}
+	} else {
+		if (funcCmp(*desde, nodo.clave) < 0) && (funcCmp(nodo.clave, *hasta) < 0) {
+			f(nodo.clave, nodo.dato)
+		}
+	}
+
+	if hasta != nil {
+		if funcCmp(nodo.clave, *hasta) < 0 {
+			nodo.derecho.iterarRango(f, funcCmp, desde, hasta)
+		}
+	} else {
+		nodo.derecho.iterarRango(f, funcCmp, desde, hasta)
+	}
+
 }
 
 /*
