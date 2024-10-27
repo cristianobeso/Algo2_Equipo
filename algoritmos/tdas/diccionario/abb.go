@@ -416,7 +416,7 @@ func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
 			}
 		}
 	}
-	return &iterDicAbbRango[K, V]{dic: abb, actual: pila.VerTope(), pila: pila, desde: desde, hasta: hasta}
+	return &iterDicAbbRango[K, V]{dic: abb, actual: abb.raiz, pila: pila, desde: desde, hasta: hasta}
 }
 
 /*
