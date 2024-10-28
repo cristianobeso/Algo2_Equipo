@@ -85,8 +85,12 @@ func (h *Heap[T]) heapifyDown(pos int) {
 }
 
 func HeapSort[T any](elementos []T, funcion_cmp func(T, T) int) {
-	heap := CrearHeapArr(elementos, funcion_cmp)
+
+	heap := CrearHeapArr(elementos, funcion_cmp).(*Heap[T])
+
 	for i := len(elementos) - 1; i > 0; i-- {
-		elementos[i] = heap.Desencolar()
+		heap.intercambiar(0, i)
+		heap.elementos = heap.elementos[:i]
+		heap.heapifyDown(0)
 	}
 }
