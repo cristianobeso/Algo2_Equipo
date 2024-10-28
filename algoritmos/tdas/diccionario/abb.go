@@ -231,7 +231,7 @@ Precondiciones: abb debe ser un puntero a un ABB válido y f debe ser una funci�
 Postcondiciones: Se aplica la función f a cada clave y dato en el árbol en orden inorden.
 */
 func (abb *abb[K, V]) Iterar(f func(clave K, dato V) bool) {
-	if abb == nil {
+	if abb.raiz == nil {
 		return
 	}
 	abb.raiz.izquierdo.iterar(f)
@@ -324,7 +324,7 @@ Precondiciones: iter debe ser un puntero a un iterador válido y no debe estar v
 Postcondiciones: Se devuelve la clave y el dato del nodo actual en el iterador.
 */
 func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato V) bool) {
-	if abb == nil {
+	if abb.raiz == nil {
 		return
 	}
 
