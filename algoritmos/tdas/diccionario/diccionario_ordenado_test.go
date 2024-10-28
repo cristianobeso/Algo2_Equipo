@@ -164,6 +164,36 @@ func TestIterarRangoVacio(t *testing.T) {
 	require.False(t, iter.HaySiguiente())
 }
 
+func TestIteradorVacio(t *testing.T) {
+	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
+		if elemento1 < elemento2 {
+			return -1
+		} else if elemento1 > elemento2 {
+			return 1
+		} else {
+			return 0
+		}
+	})
+	iter := dic.Iterador()
+	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.VerActual() })
+	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.Siguiente() })
+}
+
+func TestIteradorRangoVacio(t *testing.T) {
+	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
+		if elemento1 < elemento2 {
+			return -1
+		} else if elemento1 > elemento2 {
+			return 1
+		} else {
+			return 0
+		}
+	})
+	iter := dic.IteradorRango(nil, nil)
+	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.VerActual() })
+	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.Siguiente() })
+}
+
 func TestIterarRango(t *testing.T) {
 	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
 		if elemento1 < elemento2 {
