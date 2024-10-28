@@ -235,7 +235,9 @@ func (abb *abb[K, V]) Iterar(f func(clave K, dato V) bool) {
 		return
 	}
 	abb.raiz.izquierdo.iterar(f)
-	f(abb.raiz.clave, abb.raiz.dato)
+	if !f(abb.raiz.clave, abb.raiz.dato) {
+		return
+	}
 	abb.raiz.derecho.iterar(f)
 }
 
@@ -248,7 +250,9 @@ func (nodo *nodoAbb[K, V]) iterar(f func(clave K, dato V) bool) {
 		return
 	}
 	nodo.izquierdo.iterar(f)
-	f(nodo.clave, nodo.dato)
+	if !f(nodo.clave, nodo.dato) {
+		return
+	}
 	nodo.derecho.iterar(f)
 }
 
@@ -341,15 +345,21 @@ func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato
 
 		if desde != nil && hasta == nil {
 			if abb.funcCmp(*desde, abb.raiz.clave) <= 0 {
-				visitar(abb.raiz.clave, abb.raiz.dato)
+				if !visitar(abb.raiz.clave, abb.raiz.dato) {
+					return
+				}
 			}
 		} else if desde == nil && hasta != nil {
 			if abb.funcCmp(abb.raiz.clave, *hasta) <= 0 {
-				visitar(abb.raiz.clave, abb.raiz.dato)
+				if !visitar(abb.raiz.clave, abb.raiz.dato) {
+					return
+				}
 			}
 		} else {
 			if (abb.funcCmp(*desde, abb.raiz.clave) <= 0) && (abb.funcCmp(abb.raiz.clave, *hasta) <= 0) {
-				visitar(abb.raiz.clave, abb.raiz.dato)
+				if !visitar(abb.raiz.clave, abb.raiz.dato) {
+					return
+				}
 			}
 		}
 
@@ -378,15 +388,21 @@ func (nodo *nodoAbb[K, V]) iterarRango(f func(clave K, dato V) bool, funcCmp fun
 
 	if desde != nil && hasta == nil {
 		if funcCmp(*desde, nodo.clave) <= 0 {
-			f(nodo.clave, nodo.dato)
+			if !f(nodo.clave, nodo.dato) {
+				return
+			}
 		}
 	} else if desde == nil && hasta != nil {
 		if funcCmp(nodo.clave, *hasta) <= 0 {
-			f(nodo.clave, nodo.dato)
+			if !f(nodo.clave, nodo.dato) {
+				return
+			}
 		}
 	} else {
 		if (funcCmp(*desde, nodo.clave) <= 0) && (funcCmp(nodo.clave, *hasta) <= 0) {
-			f(nodo.clave, nodo.dato)
+			if !f(nodo.clave, nodo.dato) {
+				return
+			}
 		}
 	}
 
