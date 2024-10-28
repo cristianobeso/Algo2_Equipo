@@ -341,8 +341,8 @@ func TestIteradorRango(t *testing.T) {
 	dic.Guardar(22, 781)
 	dic.Guardar(33, 481)
 
-	claveInicio := 13
-	claveFin := 36
+	claveInicio := 14
+	claveFin := 39
 
 	iter := dic.IteradorRango(&claveInicio, &claveFin)
 	k, v := iter.VerActual()

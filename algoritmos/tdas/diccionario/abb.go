@@ -18,17 +18,15 @@ type abb[K comparable, V any] struct {
 }
 
 type iterDicAbb[K comparable, V any] struct {
-	dic    *abb[K, V]
-	actual *nodoAbb[K, V]
-	pila   pila.Pila[*nodoAbb[K, V]]
+	dic  *abb[K, V]
+	pila pila.Pila[*nodoAbb[K, V]]
 }
 
 type iterDicAbbRango[K comparable, V any] struct {
-	dic    *abb[K, V]
-	actual *nodoAbb[K, V]
-	pila   pila.Pila[*nodoAbb[K, V]]
-	desde  *K
-	hasta  *K
+	dic   *abb[K, V]
+	pila  pila.Pila[*nodoAbb[K, V]]
+	desde *K
+	hasta *K
 }
 
 /*
@@ -45,25 +43,6 @@ Postcondiciones: Se devuelve un puntero a un nuevo nodo de tipo nodoAbb con la c
 */
 func crearNodo[K comparable, V any](clave K, dato V) *nodoAbb[K, V] {
 	return &nodoAbb[K, V]{izquierdo: nil, derecho: nil, clave: clave, dato: dato}
-}
-
-/*
-Precondiciones: nodo debe ser un puntero a un nodo válido, clave debe ser de tipo K, y funcCmp debe ser una función de comparación válida. pila debe ser una pila de nodos.
-Postcondiciones: Los nodos en la ruta hacia la clave se apilan en pila.
-*/
-func apilarRecursivo[K comparable, V any](nodo *nodoAbb[K, V], clave K, funcCmp func(K, K) int, pila pila.Pila[*nodoAbb[K, V]]) {
-	if nodo == nil {
-		return
-	}
-	pila.Apilar(nodo)
-	if nodo.clave == clave {
-		return
-	}
-	if funcCmp(nodo.clave, clave) > 0 {
-		apilarRecursivo(nodo.izquierdo, clave, funcCmp, pila)
-	} else {
-		apilarRecursivo(nodo.derecho, clave, funcCmp, pila)
-	}
 }
 
 /*
@@ -288,7 +267,7 @@ func (abb *abb[K, V]) Iterador() IterDiccionario[K, V] {
 			nuevaPila.Apilar(nodoActual)
 		}
 	}
-	return &iterDicAbb[K, V]{dic: abb, actual: nodoActual, pila: nuevaPila}
+	return &iterDicAbb[K, V]{dic: abb, pila: nuevaPila}
 }
 
 /*
@@ -323,7 +302,6 @@ func (iter *iterDicAbb[K, V]) Siguiente() {
 				nodoActual = nodoActual.izquierdo
 				iter.pila.Apilar(nodoActual)
 			}
-			iter.actual = nodoActual
 		}
 	} else {
 		panic("El iterador termino de iterar")
@@ -427,21 +405,43 @@ Precondiciones: abb debe ser un puntero a un ABB válido, y desde y hasta deben 
 Postcondiciones: Se aplica la función visitar a cada clave y dato en el rango especificado.
 */
 func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
+	if desde == nil && hasta == nil {
+		return abb.Iterador()
+	}
 	pila := pila.CrearPilaDinamica[*nodoAbb[K, V]]()
-	if desde != nil {
-		apilarRecursivo(abb.raiz, *desde, abb.funcCmp, pila)
-	} else {
-		var nodo *nodoAbb[K, V]
-		nodo = abb.raiz
-		if nodo != nil {
-			pila.Apilar(abb.raiz)
-			for nodo.izquierdo != nil {
-				nodo = nodo.izquierdo
-				pila.Apilar(nodo)
-			}
+	apilarRango(desde, hasta, abb.raiz, abb.funcCmp, pila)
+	return &iterDicAbbRango[K, V]{dic: abb, pila: pila, desde: desde, hasta: hasta}
+}
+
+func apilarRango[K comparable, V any](desde *K, hasta *K, nodo *nodoAbb[K, V], funcCmp func(K, K) int, pila pila.Pila[*nodoAbb[K, V]]) {
+	if nodo == nil {
+		return
+	}
+	if desde != nil && hasta != nil {
+		if funcCmp(*desde, nodo.clave) <= 0 && funcCmp(nodo.clave, *hasta) <= 0 { // si esta dentro del rango lo apilo
+			pila.Apilar(nodo)
+			apilarRango(desde, hasta, nodo.izquierdo, funcCmp, pila)
+		} else if funcCmp(nodo.clave, *desde) < 0 {
+			apilarRango(desde, hasta, nodo.derecho, funcCmp, pila)
+		} else if funcCmp(*hasta, nodo.clave) < 0 {
+			apilarRango(desde, hasta, nodo.izquierdo, funcCmp, pila)
+		}
+	} else if desde == nil {
+
+		if funcCmp(nodo.clave, *hasta) <= 0 { // si esta dentro del rango lo apilo
+			pila.Apilar(nodo)
+			apilarRango(desde, hasta, nodo.izquierdo, funcCmp, pila)
+		} else if funcCmp(*hasta, nodo.clave) < 0 {
+			apilarRango(desde, hasta, nodo.izquierdo, funcCmp, pila)
+		}
+	} else if hasta == nil {
+		if funcCmp(nodo.clave, *desde) <= 0 {
+			pila.Apilar(nodo)
+			apilarRango(desde, hasta, nodo.izquierdo, funcCmp, pila)
+		} else if funcCmp(nodo.clave, *desde) < 0 {
+			apilarRango(desde, hasta, nodo.derecho, funcCmp, pila)
 		}
 	}
-	return &iterDicAbbRango[K, V]{dic: abb, actual: abb.raiz, pila: pila, desde: desde, hasta: hasta}
 }
 
 /*
@@ -455,17 +455,13 @@ func (iter *iterDicAbbRango[K, V]) HaySiguiente() bool {
 	nodo := iter.pila.Desapilar()
 	if iter.pila.EstaVacia() {
 		iter.pila.Apilar(nodo)
+		if nodo.derecho != nil {
+			pilaAux := pila.CrearPilaDinamica[*nodoAbb[K, V]]()
+			apilarRango(iter.desde, iter.hasta, nodo.derecho, iter.dic.funcCmp, pilaAux)
+			return !pilaAux.EstaVacia()
+		}
 		return nodo.derecho != nil
 	} else {
-		if iter.hasta != nil {
-			if iter.dic.funcCmp(*iter.hasta, iter.pila.VerTope().clave) < 0 {
-				iter.pila.Apilar(nodo)
-				for !iter.pila.EstaVacia() {
-					iter.pila.Desapilar()
-				}
-				return false
-			}
-		}
 		iter.pila.Apilar(nodo)
 		return true
 	}
@@ -477,33 +473,8 @@ Postcondiciones: Se mueve al siguiente elemento en el iterador de rango, actuali
 */
 func (iter *iterDicAbbRango[K, V]) Siguiente() {
 	if iter.HaySiguiente() {
-		nodoActual := iter.pila.Desapilar()
-		if iter.desde != nil {
-			if iter.dic.funcCmp(nodoActual.clave, *iter.desde) >= 0 {
-				if nodoActual.derecho != nil {
-					iter.pila.Apilar(nodoActual.derecho)
-
-					proximoNodo := nodoActual.derecho
-					for proximoNodo.izquierdo != nil {
-						proximoNodo = proximoNodo.izquierdo
-						iter.pila.Apilar(proximoNodo)
-					}
-				}
-			}
-			for iter.dic.funcCmp(iter.pila.VerTope().clave, *iter.desde) < 0 {
-				iter.pila.Desapilar()
-			}
-		} else {
-			if nodoActual.derecho != nil {
-				iter.pila.Apilar(nodoActual.derecho)
-
-				proximoNodo := nodoActual.derecho
-				for proximoNodo.izquierdo != nil {
-					proximoNodo = proximoNodo.izquierdo
-					iter.pila.Apilar(proximoNodo)
-				}
-			}
-		}
+		elemento := iter.pila.Desapilar()
+		apilarRango(iter.desde, iter.hasta, elemento.derecho, iter.dic.funcCmp, iter.pila)
 	} else {
 		panic("El iterador termino de iterar")
 	}
