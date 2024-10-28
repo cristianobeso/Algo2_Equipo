@@ -332,7 +332,7 @@ func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato
 		abb.Iterar(visitar)
 	} else {
 		if desde != nil {
-			if abb.funcCmp(*desde, abb.raiz.clave) < 0 {
+			if abb.funcCmp(*desde, abb.raiz.clave) <= 0 {
 				abb.raiz.izquierdo.iterarRango(visitar, abb.funcCmp, desde, hasta)
 			}
 		} else {
@@ -340,21 +340,21 @@ func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato
 		}
 
 		if desde != nil && hasta == nil {
-			if abb.funcCmp(*desde, abb.raiz.clave) < 0 {
+			if abb.funcCmp(*desde, abb.raiz.clave) <= 0 {
 				visitar(abb.raiz.clave, abb.raiz.dato)
 			}
 		} else if desde == nil && hasta != nil {
-			if abb.funcCmp(abb.raiz.clave, *hasta) < 0 {
+			if abb.funcCmp(abb.raiz.clave, *hasta) <= 0 {
 				visitar(abb.raiz.clave, abb.raiz.dato)
 			}
 		} else {
-			if (abb.funcCmp(*desde, abb.raiz.clave) < 0) && (abb.funcCmp(abb.raiz.clave, *hasta) < 0) {
+			if (abb.funcCmp(*desde, abb.raiz.clave) <= 0) && (abb.funcCmp(abb.raiz.clave, *hasta) <= 0) {
 				visitar(abb.raiz.clave, abb.raiz.dato)
 			}
 		}
 
 		if hasta != nil {
-			if abb.funcCmp(abb.raiz.clave, *hasta) < 0 {
+			if abb.funcCmp(abb.raiz.clave, *hasta) <= 0 {
 				abb.raiz.derecho.iterarRango(visitar, abb.funcCmp, desde, hasta)
 			}
 		} else {
@@ -369,7 +369,7 @@ func (nodo *nodoAbb[K, V]) iterarRango(f func(clave K, dato V) bool, funcCmp fun
 	}
 
 	if desde != nil {
-		if funcCmp(*desde, nodo.clave) < 0 {
+		if funcCmp(*desde, nodo.clave) <= 0 {
 			nodo.izquierdo.iterarRango(f, funcCmp, desde, hasta)
 		}
 	} else {
@@ -377,21 +377,21 @@ func (nodo *nodoAbb[K, V]) iterarRango(f func(clave K, dato V) bool, funcCmp fun
 	}
 
 	if desde != nil && hasta == nil {
-		if funcCmp(*desde, nodo.clave) < 0 {
+		if funcCmp(*desde, nodo.clave) <= 0 {
 			f(nodo.clave, nodo.dato)
 		}
 	} else if desde == nil && hasta != nil {
-		if funcCmp(nodo.clave, *hasta) < 0 {
+		if funcCmp(nodo.clave, *hasta) <= 0 {
 			f(nodo.clave, nodo.dato)
 		}
 	} else {
-		if (funcCmp(*desde, nodo.clave) < 0) && (funcCmp(nodo.clave, *hasta) < 0) {
+		if (funcCmp(*desde, nodo.clave) <= 0) && (funcCmp(nodo.clave, *hasta) <= 0) {
 			f(nodo.clave, nodo.dato)
 		}
 	}
 
 	if hasta != nil {
-		if funcCmp(nodo.clave, *hasta) < 0 {
+		if funcCmp(nodo.clave, *hasta) <= 0 {
 			nodo.derecho.iterarRango(f, funcCmp, desde, hasta)
 		}
 	} else {
