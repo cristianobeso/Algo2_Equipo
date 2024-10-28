@@ -1,7 +1,7 @@
 package cola_prioridad_test
 
 import (
-	cola_prioridad "tdas/heap"
+	cola_prioridad "tdas/cola_prioridad"
 	"testing"
 )
 
