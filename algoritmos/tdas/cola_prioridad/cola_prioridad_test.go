@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// Función de comparación para enteros (máximo heap).
+// Función de comparación
 func cmpInt(a, b int) int {
 	return a - b
 }
@@ -103,4 +103,23 @@ func TestVerMaxHeapVacio(t *testing.T) {
 	}()
 	heap := cola_prioridad.CrearHeap(cmpInt)
 	heap.VerMax()
+}
+
+func TestDesencolarReduceTamanio(t *testing.T) {
+	heap := cola_prioridad.CrearHeap(cmpInt)
+	elementos := []int{20, 15, 10, 8, 7, 9}
+	for _, elem := range elementos {
+		heap.Encolar(elem)
+	}
+
+	if heap.Cantidad() != len(elementos) {
+		t.Fatalf("Error en tamaño inicial: esperado %d, pero obtenido %d", len(elementos), heap.Cantidad())
+	}
+
+	for i := len(elementos); i > 0; i-- {
+		heap.Desencolar()
+		if heap.Cantidad() != i-1 {
+			t.Errorf("Error en cantidad después de desencolar: esperado %d, obtenido %d", i-1, heap.Cantidad())
+		}
+	}
 }
