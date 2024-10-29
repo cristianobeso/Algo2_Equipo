@@ -230,30 +230,37 @@ func (abb *abb[K, V]) Cantidad() int {
 Precondiciones: abb debe ser un puntero a un ABB válido y f debe ser una función válida que acepte una clave y un dato.
 Postcondiciones: Se aplica la función f a cada clave y dato en el árbol en orden inorden.
 */
-func (abb *abb[K, V]) Iterar(f func(clave K, dato V) bool) {
+func (abb *abb[K, V]) Iterar(visitar func(clave K, dato V) bool) {
 	if abb.raiz == nil {
 		return
 	}
-	abb.raiz.izquierdo.iterar(f)
-	if !f(abb.raiz.clave, abb.raiz.dato) {
+	if !abb.raiz.iterar(visitar) {
 		return
 	}
-	abb.raiz.derecho.iterar(f)
 }
 
 /*
 Precondiciones: nodo debe ser un puntero a un nodo válido y f debe ser una función válida.
 Postcondiciones: Se aplica la función f a cada clave y dato en el subárbol en orden inorden.
 */
-func (nodo *nodoAbb[K, V]) iterar(f func(clave K, dato V) bool) {
+func (nodo *nodoAbb[K, V]) iterar(visitar func(clave K, dato V) bool) bool {
 	if nodo == nil {
-		return
+		return true
 	}
-	nodo.izquierdo.iterar(f)
-	if !f(nodo.clave, nodo.dato) {
-		return
+
+	if nodo.izquierdo.iterar(visitar) { // pregunto como resulto la iteracion del lado izquierdo
+
+		// aplico la funcion de visita al nodo actual
+		if visitar(nodo.clave, nodo.dato) { // en caso de ser true itero el derecho
+
+			return nodo.derecho.iterar(visitar) // itero el derecho
+
+		} else {
+			return false
+		}
+	} else {
+		return false
 	}
-	nodo.derecho.iterar(f)
 }
 
 /*
@@ -327,6 +334,7 @@ func (iter *iterDicAbb[K, V]) VerActual() (K, V) {
 Precondiciones: iter debe ser un puntero a un iterador válido y no debe estar vacío.
 Postcondiciones: Se devuelve la clave y el dato del nodo actual en el iterador.
 */
+
 func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato V) bool) {
 	if abb.raiz == nil {
 		return
@@ -335,85 +343,80 @@ func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato
 	if desde == nil && hasta == nil { // si no tiene limites se iterar con el iterador interno sin rangos
 		abb.Iterar(visitar)
 	} else {
-		if desde != nil {
-			if abb.funcCmp(*desde, abb.raiz.clave) <= 0 {
-				abb.raiz.izquierdo.iterarRango(visitar, abb.funcCmp, desde, hasta)
-			}
-		} else {
-			abb.raiz.izquierdo.iterarRango(visitar, abb.funcCmp, desde, hasta)
-		}
-
-		if desde != nil && hasta == nil {
-			if abb.funcCmp(*desde, abb.raiz.clave) <= 0 {
-				if !visitar(abb.raiz.clave, abb.raiz.dato) {
-					return
-				}
-			}
-		} else if desde == nil && hasta != nil {
-			if abb.funcCmp(abb.raiz.clave, *hasta) <= 0 {
-				if !visitar(abb.raiz.clave, abb.raiz.dato) {
-					return
-				}
-			}
-		} else {
-			if (abb.funcCmp(*desde, abb.raiz.clave) <= 0) && (abb.funcCmp(abb.raiz.clave, *hasta) <= 0) {
-				if !visitar(abb.raiz.clave, abb.raiz.dato) {
-					return
-				}
-			}
-		}
-
-		if hasta != nil {
-			if abb.funcCmp(abb.raiz.clave, *hasta) <= 0 {
-				abb.raiz.derecho.iterarRango(visitar, abb.funcCmp, desde, hasta)
-			}
-		} else {
-			abb.raiz.derecho.iterarRango(visitar, abb.funcCmp, desde, hasta)
+		if !abb.raiz.iterarRango(visitar, abb.funcCmp, desde, hasta) { // si al iterar el actual da false, se corta la iteracion
+			return
 		}
 	}
 }
 
-func (nodo *nodoAbb[K, V]) iterarRango(f func(clave K, dato V) bool, funcCmp func(clave1 K, clave2 K) int, desde *K, hasta *K) {
+/*
+Precondiciones: nodo debe ser un puntero a un nodo válido y visitar debe ser una función válida.
+Postcondiciones: Se aplica la función visitar a cada clave y dato en el subárbol en orden inorden.
+*/
+func (nodo *nodoAbb[K, V]) iterarRango(visitar func(clave K, dato V) bool, funcCmp func(K, K) int, desde *K, hasta *K) bool {
 	if nodo == nil {
-		return
+		return true
 	}
 
-	if desde != nil {
-		if funcCmp(*desde, nodo.clave) <= 0 {
-			nodo.izquierdo.iterarRango(f, funcCmp, desde, hasta)
-		}
-	} else {
-		nodo.izquierdo.iterarRango(f, funcCmp, desde, hasta)
-	}
+	if desde != nil && hasta != nil { // si estan los dos limites
 
-	if desde != nil && hasta == nil {
-		if funcCmp(*desde, nodo.clave) <= 0 {
-			if !f(nodo.clave, nodo.dato) {
-				return
+		if funcCmp(*desde, nodo.clave) <= 0 { // mientras no baje por el limite inferior
+			if nodo.izquierdo.iterarRango(visitar, funcCmp, desde, hasta) { //iteramos los izquierdos
+
+				if funcCmp(nodo.clave, *hasta) <= 0 { // mientras no supere el limite superior
+
+					// aplico la funcion al nodo actual
+					if visitar(nodo.clave, nodo.dato) {
+						return nodo.derecho.iterarRango(visitar, funcCmp, desde, hasta) // iteramos el derecho
+					} else {
+						return false
+					}
+				} else {
+					return false // si supera el limite superior retorna false
+				}
+
+			} else {
+				return false
 			}
+
+		} else { // si no tiene que iterar el lado izquierdo pregunto por el hijo derecho
+			return nodo.derecho.iterarRango(visitar, funcCmp, desde, hasta)
 		}
-	} else if desde == nil && hasta != nil {
-		if funcCmp(nodo.clave, *hasta) <= 0 {
-			if !f(nodo.clave, nodo.dato) {
-				return
+
+	} else if desde == nil { // si no tiene limite inferior
+		if nodo.izquierdo.iterarRango(visitar, funcCmp, desde, hasta) { // visito todos los izquierdos
+
+			if funcCmp(nodo.clave, *hasta) <= 0 { // mientras no supere el limite superior
+
+				//aplico la funcion al nodo actual
+				if visitar(nodo.clave, nodo.dato) {
+					return nodo.derecho.iterarRango(visitar, funcCmp, desde, hasta) // itero el derecho
+				} else {
+					return false // si el actual dio false lo retorno
+				}
+			} else {
+				return false // si supera el limite superior retorna false
 			}
+		} else {
+			return false // si el iterar izquierdo dio false lo retorno
 		}
-	} else {
-		if (funcCmp(*desde, nodo.clave) <= 0) && (funcCmp(nodo.clave, *hasta) <= 0) {
-			if !f(nodo.clave, nodo.dato) {
-				return
+	} else { // en este caso no tiene limite superior
+		if funcCmp(*desde, nodo.clave) <= 0 { // mientras no baje por el limite inferior
+			if nodo.izquierdo.iterarRango(visitar, funcCmp, desde, hasta) { //iteramos los izquierdos
+
+				// aplico la funcion al nodo actual
+				if visitar(nodo.clave, nodo.dato) {
+					return nodo.derecho.iterarRango(visitar, funcCmp, desde, hasta) // iteramos el derecho
+				} else {
+					return false
+				}
+			} else {
+				return false
 			}
+		} else {
+			return nodo.derecho.iterarRango(visitar, funcCmp, desde, hasta)
 		}
 	}
-
-	if hasta != nil {
-		if funcCmp(nodo.clave, *hasta) <= 0 {
-			nodo.derecho.iterarRango(f, funcCmp, desde, hasta)
-		}
-	} else {
-		nodo.derecho.iterarRango(f, funcCmp, desde, hasta)
-	}
-
 }
 
 /*
