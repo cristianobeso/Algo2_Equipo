@@ -464,6 +464,37 @@ func apilarRango[K comparable, V any](desde *K, hasta *K, nodo *nodoAbb[K, V], f
 }
 
 /*
+**************** ALGO ASI SUPUESTAMENTE ES LO QUE NOS DIJO FRAN EL CORRECTOR **********
+
+func (iter *iterDicAbbRango[K, V]) HaySiguiente() bool {
+	return !iter.pila.EstaVacia() // Solo verifica si la pila está vacía
+}
+
+func (iter *iterDicAbbRango[K, V]) Siguiente() {
+	if iter.HaySiguiente() {
+		// Desapilamos el nodo actual
+		nodo := iter.pila.Desapilar()
+
+		// Verificamos si hay un subárbol derecho
+		if nodo.derecho != nil {
+			// Apilamos el nodo derecho
+			iter.pila.Apilar(nodo.derecho)
+
+			// Apilamos todos los hijos izquierdos del subárbol derecho
+			actual := nodo.derecho
+			for actual.izquierdo != nil {
+				actual = actual.izquierdo
+				iter.pila.Apilar(actual)
+			}
+		}
+	} else {
+		panic("El iterador terminó de iterar")
+	}
+}
+
+*/
+
+/*
 Precondiciones: iter debe ser un puntero a un iterador de rango válido.
 Postcondiciones: Se devuelve true si hay un siguiente elemento en la pila; de lo contrario, false.
 */
