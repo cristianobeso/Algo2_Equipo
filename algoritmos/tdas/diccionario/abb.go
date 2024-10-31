@@ -18,11 +18,6 @@ type abb[K comparable, V any] struct {
 }
 
 type iterDicAbb[K comparable, V any] struct {
-	dic  *abb[K, V]
-	pila pila.Pila[*nodoAbb[K, V]]
-}
-
-type iterDicAbbRango[K comparable, V any] struct {
 	dic   *abb[K, V]
 	pila  pila.Pila[*nodoAbb[K, V]]
 	desde *K
@@ -33,8 +28,8 @@ type iterDicAbbRango[K comparable, V any] struct {
 Precondiciones: function_cmp debe ser una función válida que compare dos claves de tipo K y devuelva un entero.
 Postcondiciones: Se devuelve un puntero a un nuevo diccionario ordenado vacío.
 */
-func CrearABB[K comparable, V any](function_cmp func(K, K) int) DiccionarioOrdenado[K, V] {
-	return &abb[K, V]{raiz: nil, cantidad: 0, funcCmp: function_cmp}
+func CrearABB[K comparable, V any](funcCmp func(K, K) int) DiccionarioOrdenado[K, V] {
+	return &abb[K, V]{raiz: nil, cantidad: 0, funcCmp: funcCmp}
 }
 
 /*
@@ -316,47 +311,6 @@ func (iter *iterDicAbb[K, V]) Siguiente() {
 */
 
 /*
-Precondiciones: iter debe ser un puntero a un iterador válido.
-Postcondiciones: Se devuelve true si hay un siguiente elemento en la pila; de lo contrario, false.
-*/
-func (iter *iterDicAbb[K, V]) HaySiguiente() bool {
-	return !iter.pila.EstaVacia()
-}
-
-/*
-Precondiciones: iter debe ser un puntero a un iterador válido.
-Postcondiciones: Se mueve al siguiente elemento en el iterador, actualizando la pila según sea necesario.
-*/
-func (iter *iterDicAbb[K, V]) Siguiente() {
-	if !iter.HaySiguiente() {
-		panic("El iterador termino de iterar")
-	}
-
-	nodoActual := iter.pila.Desapilar()
-
-	if nodoActual.derecho != nil {
-		nodoActual = nodoActual.derecho
-		iter.pila.Apilar(nodoActual)
-
-		for nodoActual.izquierdo != nil {
-			nodoActual = nodoActual.izquierdo
-			iter.pila.Apilar(nodoActual)
-		}
-	}
-}
-
-/*
-Precondiciones:
-Postcondiciones:
-*/
-func (iter *iterDicAbb[K, V]) VerActual() (K, V) {
-	if iter.pila.EstaVacia() {
-		panic("El iterador termino de iterar")
-	}
-	return iter.pila.VerTope().clave, iter.pila.VerTope().dato
-}
-
-/*
 Precondiciones: iter debe ser un puntero a un iterador válido y no debe estar vacío.
 Postcondiciones: Se devuelve la clave y el dato del nodo actual en el iterador.
 */
@@ -453,9 +407,9 @@ func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
 	if desde == nil && hasta == nil {
 		return abb.Iterador()
 	}
-	pila := pila.CrearPilaDinamica[*nodoAbb[K, V]]()
-	apilarRango(desde, hasta, abb.raiz, abb.funcCmp, pila)
-	return &iterDicAbbRango[K, V]{dic: abb, pila: pila, desde: desde, hasta: hasta}
+	nuevaPila := pila.CrearPilaDinamica[*nodoAbb[K, V]]()
+	apilarRango(desde, hasta, abb.raiz, abb.funcCmp, nuevaPila)
+	return &iterDicAbb[K, V]{dic: abb, pila: nuevaPila, desde: desde, hasta: hasta}
 }
 
 /*
@@ -509,80 +463,35 @@ func apilarRango[K comparable, V any](desde *K, hasta *K, nodo *nodoAbb[K, V], f
 }
 
 /*
-**************** GUARDO LO QUE HABIAS HECHO POR LAS DUDAS **********
-
-func (iter *iterDicAbbRango[K, V]) HaySiguiente() bool {
-	if iter.pila.EstaVacia() {
-		return false
-	}
-	nodo := iter.pila.Desapilar()
-	if iter.pila.EstaVacia() {
-		iter.pila.Apilar(nodo)
-		if nodo.derecho != nil {
-			pilaAux := pila.CrearPilaDinamica[*nodoAbb[K, V]]()
-			apilarRango(iter.desde, iter.hasta, nodo.derecho, iter.dic.funcCmp, pilaAux)
-			return !pilaAux.EstaVacia()
-		}
-		return nodo.derecho != nil
-	} else {
-		iter.pila.Apilar(nodo)
-		return true
-	}
-}
-
-func (iter *iterDicAbbRango[K, V]) Siguiente() {
-	if iter.HaySiguiente() {
-		elemento := iter.pila.Desapilar()
-		apilarRango(iter.desde, iter.hasta, elemento.derecho, iter.dic.funcCmp, iter.pila)
-	} else {
-		panic("El iterador termino de iterar")
-	}
-}
-
-
-*/
-
-/*
 Precondiciones: iter debe ser un puntero a un iterador de rango válido.
 Postcondiciones: Devuelve true si hay un siguiente elemento en el rango, sin modificar la pila.
 */
 // Modificación de HaySiguiente() para manejar correctamente el caso sin 'hasta' y sin límites
-func (iter *iterDicAbbRango[K, V]) HaySiguiente() bool {
+func (iter *iterDicAbb[K, V]) HaySiguiente() bool {
 	if iter.pila.EstaVacia() {
 		return false
 	}
-
 	nodo := iter.pila.VerTope()
-
-	if iter.desde == nil && iter.hasta == nil {
-		return true
-	}
-
 	if iter.desde != nil && iter.dic.funcCmp(nodo.clave, *iter.desde) < 0 {
 		return false
 	}
-
 	if iter.hasta != nil && iter.dic.funcCmp(nodo.clave, *iter.hasta) > 0 {
 		return false
 	}
-
 	return true
 }
 
-func (iter *iterDicAbbRango[K, V]) Siguiente() {
+// Siguiente avanza al siguiente elemento en el iterador, respetando los límites opcionales.
+func (iter *iterDicAbb[K, V]) Siguiente() {
 	if !iter.HaySiguiente() {
 		panic("El iterador termino de iterar")
 	}
-
 	nodoActual := iter.pila.Desapilar()
-
 	if nodoActual.derecho != nil {
 		apilarRango(iter.desde, iter.hasta, nodoActual.derecho, iter.dic.funcCmp, iter.pila)
 	}
-
 	for !iter.pila.EstaVacia() {
 		nodo := iter.pila.VerTope()
-
 		if (iter.desde != nil && iter.dic.funcCmp(nodo.clave, *iter.desde) < 0) ||
 			(iter.hasta != nil && iter.dic.funcCmp(nodo.clave, *iter.hasta) > 0) {
 			iter.pila.Desapilar()
@@ -593,10 +502,10 @@ func (iter *iterDicAbbRango[K, V]) Siguiente() {
 }
 
 /*
-Precondiciones: El iterador debe estar inicializado y no debe estar vacío. Debe haber al menos un elemento en la pila que el iterador está utilizando.
-Postcondiciones: Se devuelve la clave y el valor del elemento actual en el iterador. No se produce modificación en el estado del iterador.
+Precondiciones:
+Postcondiciones:
 */
-func (iter *iterDicAbbRango[K, V]) VerActual() (K, V) {
+func (iter *iterDicAbb[K, V]) VerActual() (K, V) {
 	if iter.pila.EstaVacia() {
 		panic("El iterador termino de iterar")
 	}
