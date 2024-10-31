@@ -343,6 +343,51 @@ func TestIteradorRango(t *testing.T) {
 	require.False(t, iter.HaySiguiente())
 }
 
+func TestIteradorOrdenado(t *testing.T) {
+	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
+		if elemento1 < elemento2 {
+			return -1
+		} else if elemento1 > elemento2 {
+			return 1
+		} else {
+			return 0
+		}
+	})
+
+	dic.Guardar(1, 10)
+	dic.Guardar(2, 20)
+	dic.Guardar(3, 30)
+	dic.Guardar(4, 40)
+	dic.Guardar(5, 50)
+	dic.Guardar(6, 60)
+	dic.Guardar(7, 70)
+	iter := dic.Iterador()
+
+	// Definir el recorrido esperado
+	recorridoEsperado := []struct {
+		clave int
+		valor int
+	}{
+		{1, 10},
+		{2, 20},
+		{3, 30},
+		{4, 40},
+		{5, 50},
+		{6, 60},
+		{7, 70},
+	}
+
+	for _, esperado := range recorridoEsperado {
+		require.True(t, iter.HaySiguiente()) // Verificar que hay siguiente
+		k, v := iter.VerActual()             // Verificar clave y valor actuales
+		require.Equal(t, esperado.clave, k)
+		require.Equal(t, esperado.valor, v)
+		iter.Siguiente()
+	}
+
+	require.False(t, iter.HaySiguiente())
+}
+
 func TestEliminar(t *testing.T) {
 	dic := TDADiccionario.CrearABB[int, int](func(elemento1, elemento2 int) int {
 		if elemento1 < elemento2 {
