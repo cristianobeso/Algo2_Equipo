@@ -467,38 +467,6 @@ func apilarRango[K comparable, V any](desde *K, hasta *K, nodo *nodoAbb[K, V], f
 **************** ALGO ASI SUPUESTAMENTE ES LO QUE NOS DIJO FRAN EL CORRECTOR **********
 
 func (iter *iterDicAbbRango[K, V]) HaySiguiente() bool {
-	return !iter.pila.EstaVacia() // Solo verifica si la pila está vacía
-}
-
-func (iter *iterDicAbbRango[K, V]) Siguiente() {
-	if iter.HaySiguiente() {
-		// Desapilamos el nodo actual
-		nodo := iter.pila.Desapilar()
-
-		// Verificamos si hay un subárbol derecho
-		if nodo.derecho != nil {
-			// Apilamos el nodo derecho
-			iter.pila.Apilar(nodo.derecho)
-
-			// Apilamos todos los hijos izquierdos del subárbol derecho
-			actual := nodo.derecho
-			for actual.izquierdo != nil {
-				actual = actual.izquierdo
-				iter.pila.Apilar(actual)
-			}
-		}
-	} else {
-		panic("El iterador terminó de iterar")
-	}
-}
-
-*/
-
-/*
-Precondiciones: iter debe ser un puntero a un iterador de rango válido.
-Postcondiciones: Se devuelve true si hay un siguiente elemento en la pila; de lo contrario, false.
-*/
-func (iter *iterDicAbbRango[K, V]) HaySiguiente() bool {
 	if iter.pila.EstaVacia() {
 		return false
 	}
@@ -517,16 +485,65 @@ func (iter *iterDicAbbRango[K, V]) HaySiguiente() bool {
 	}
 }
 
-/*
-Precondiciones: iter debe ser un puntero a un iterador de rango válido.
-Postcondiciones: Se mueve al siguiente elemento en el iterador de rango, actualizando la pila según sea necesario.
-*/
 func (iter *iterDicAbbRango[K, V]) Siguiente() {
 	if iter.HaySiguiente() {
 		elemento := iter.pila.Desapilar()
 		apilarRango(iter.desde, iter.hasta, elemento.derecho, iter.dic.funcCmp, iter.pila)
 	} else {
 		panic("El iterador termino de iterar")
+	}
+}
+
+
+*/
+
+/*
+Precondiciones: iter debe ser un puntero a un iterador de rango válido.
+Postcondiciones: Devuelve true si hay un siguiente elemento en el rango, sin modificar la pila.
+*/
+// Modificación de HaySiguiente() para manejar correctamente el caso sin 'hasta' y sin límites
+func (iter *iterDicAbbRango[K, V]) HaySiguiente() bool {
+	if iter.pila.EstaVacia() {
+		return false
+	}
+
+	nodo := iter.pila.VerTope()
+
+	if iter.desde == nil && iter.hasta == nil {
+		return true
+	}
+
+	if iter.desde != nil && iter.dic.funcCmp(nodo.clave, *iter.desde) < 0 {
+		return false
+	}
+
+	if iter.hasta != nil && iter.dic.funcCmp(nodo.clave, *iter.hasta) > 0 {
+		return false
+	}
+
+	return true
+}
+
+func (iter *iterDicAbbRango[K, V]) Siguiente() {
+	if !iter.HaySiguiente() {
+		panic("El iterador termino de iterar")
+	}
+
+	nodoActual := iter.pila.Desapilar()
+
+	if nodoActual.derecho != nil {
+		apilarRango(iter.desde, iter.hasta, nodoActual.derecho, iter.dic.funcCmp, iter.pila)
+	}
+
+	for !iter.pila.EstaVacia() {
+		nodo := iter.pila.VerTope()
+
+		if (iter.desde != nil && iter.dic.funcCmp(nodo.clave, *iter.desde) < 0) ||
+			(iter.hasta != nil && iter.dic.funcCmp(nodo.clave, *iter.hasta) > 0) {
+			iter.pila.Desapilar()
+		} else {
+			break
+		}
 	}
 }
 

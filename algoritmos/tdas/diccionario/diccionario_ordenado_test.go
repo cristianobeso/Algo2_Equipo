@@ -364,41 +364,39 @@ func TestIteradorRango(t *testing.T) {
 	dic.Guardar(5, 159)
 	dic.Guardar(3, 753)
 	dic.Guardar(6, 486)
-
 	dic.Guardar(30, 426)
 	dic.Guardar(40, 423)
 	dic.Guardar(35, 126)
 	dic.Guardar(22, 781)
 	dic.Guardar(33, 481)
 
+	// Definir el rango de claves
 	claveInicio := 14
 	claveFin := 39
 
+	// Crear el iterador de rango
 	iter := dic.IteradorRango(&claveInicio, &claveFin)
-	k, v := iter.VerActual()
-	require.Equal(t, k, 15)
-	iter.Siguiente()
 
-	k, v = iter.VerActual()
-	require.Equal(t, k, 20)
-	iter.Siguiente()
+	// Definir el recorrido esperado
+	recorridoEsperado := []struct {
+		clave int
+		valor int
+	}{
+		{15, 789},
+		{20, 123},
+		{22, 781},
+		{30, 426},
+		{33, 481},
+		{35, 126},
+	}
 
-	k, v = iter.VerActual()
-	require.Equal(t, k, 22)
-	iter.Siguiente()
-
-	k, v = iter.VerActual()
-	require.Equal(t, k, 30)
-	iter.Siguiente()
-
-	k, v = iter.VerActual()
-	require.Equal(t, k, 33)
-	iter.Siguiente()
-
-	k, v = iter.VerActual()
-	require.Equal(t, k, 35)
-
-	require.Equal(t, v, 126)
+	for _, esperado := range recorridoEsperado {
+		require.True(t, iter.HaySiguiente()) // Verificar que hay siguiente
+		k, v := iter.VerActual()             // Verificar clave y valor actuales
+		require.Equal(t, esperado.clave, k)
+		require.Equal(t, esperado.valor, v)
+		iter.Siguiente()
+	}
 
 	require.False(t, iter.HaySiguiente())
 }
