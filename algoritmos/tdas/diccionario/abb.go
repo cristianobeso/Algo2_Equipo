@@ -282,9 +282,8 @@ func (abb *abb[K, V]) Iterador() IterDiccionario[K, V] {
 }
 
 /*
-Precondiciones: iter debe ser un puntero a un iterador válido.
-Postcondiciones: Se devuelve true si hay un siguiente elemento en la pila; de lo contrario, false.
-*/
+**************** GUARDO LO QUE HABIAS HECHO POR LAS DUDAS **********
+
 func (iter *iterDicAbb[K, V]) HaySiguiente() bool {
 	if iter.pila.EstaVacia() {
 		return false
@@ -299,10 +298,6 @@ func (iter *iterDicAbb[K, V]) HaySiguiente() bool {
 	}
 }
 
-/*
-Precondiciones: iter debe ser un puntero a un iterador válido.
-Postcondiciones: Se mueve al siguiente elemento en el iterador, actualizando la pila según sea necesario.
-*/
 func (iter *iterDicAbb[K, V]) Siguiente() {
 	if iter.HaySiguiente() {
 		nodoActual := iter.pila.Desapilar()
@@ -316,6 +311,37 @@ func (iter *iterDicAbb[K, V]) Siguiente() {
 		}
 	} else {
 		panic("El iterador termino de iterar")
+	}
+}
+*/
+
+/*
+Precondiciones: iter debe ser un puntero a un iterador válido.
+Postcondiciones: Se devuelve true si hay un siguiente elemento en la pila; de lo contrario, false.
+*/
+func (iter *iterDicAbb[K, V]) HaySiguiente() bool {
+	return !iter.pila.EstaVacia()
+}
+
+/*
+Precondiciones: iter debe ser un puntero a un iterador válido.
+Postcondiciones: Se mueve al siguiente elemento en el iterador, actualizando la pila según sea necesario.
+*/
+func (iter *iterDicAbb[K, V]) Siguiente() {
+	if !iter.HaySiguiente() {
+		panic("El iterador termino de iterar")
+	}
+
+	nodoActual := iter.pila.Desapilar()
+
+	if nodoActual.derecho != nil {
+		nodoActual = nodoActual.derecho
+		iter.pila.Apilar(nodoActual)
+
+		for nodoActual.izquierdo != nil {
+			nodoActual = nodoActual.izquierdo
+			iter.pila.Apilar(nodoActual)
+		}
 	}
 }
 
@@ -483,7 +509,7 @@ func apilarRango[K comparable, V any](desde *K, hasta *K, nodo *nodoAbb[K, V], f
 }
 
 /*
-**************** ALGO ASI SUPUESTAMENTE ES LO QUE NOS DIJO FRAN EL CORRECTOR **********
+**************** GUARDO LO QUE HABIAS HECHO POR LAS DUDAS **********
 
 func (iter *iterDicAbbRango[K, V]) HaySiguiente() bool {
 	if iter.pila.EstaVacia() {
