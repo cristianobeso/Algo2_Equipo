@@ -432,6 +432,7 @@ func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
 	return &iterDicAbbRango[K, V]{dic: abb, pila: pila, desde: desde, hasta: hasta}
 }
 
+/*
 func apilarRango[K comparable, V any](desde *K, hasta *K, nodo *nodoAbb[K, V], funcCmp func(K, K) int, pila pila.Pila[*nodoAbb[K, V]]) {
 	if nodo == nil {
 		return
@@ -460,6 +461,24 @@ func apilarRango[K comparable, V any](desde *K, hasta *K, nodo *nodoAbb[K, V], f
 		} else if funcCmp(nodo.clave, *desde) < 0 {
 			apilarRango(desde, hasta, nodo.derecho, funcCmp, pila)
 		}
+	}
+}
+*/
+
+func apilarRango[K comparable, V any](desde *K, hasta *K, nodo *nodoAbb[K, V], funcCmp func(K, K) int, pila pila.Pila[*nodoAbb[K, V]]) {
+	if nodo == nil {
+		return
+	}
+
+	// Si hay un límite inferior, lo respetamos
+	if desde != nil && funcCmp(nodo.clave, *desde) < 0 {
+		apilarRango(desde, hasta, nodo.derecho, funcCmp, pila)
+	} else {
+		// Apilamos el nodo actual si está dentro del rango
+		if hasta == nil || funcCmp(nodo.clave, *hasta) <= 0 {
+			pila.Apilar(nodo)
+		}
+		apilarRango(desde, hasta, nodo.izquierdo, funcCmp, pila)
 	}
 }
 
