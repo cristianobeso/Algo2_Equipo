@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	datServ := servidor.CrearEstructuraDatos()
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -24,7 +25,8 @@ func main() {
 				fmt.Fprintln(os.Stderr, "Error en comando agregar_archivo")
 				return
 			}
-			err := servidor.AgregarArchivo(parts[1])
+			err := datServ.AgregarArchivo(parts[1])
+			//err := servidor.AgregarArchivo(parts[1])
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				return
@@ -34,14 +36,14 @@ func main() {
 				fmt.Fprintln(os.Stderr, "Error en comando ver_visitantes")
 				return
 			}
-			servidor.VerVisitantes(parts[1], parts[2])
+			datServ.VerVisitantes(parts[1], parts[2])
 		case "ver_mas_visitados":
 			if len(parts) != 2 {
 				fmt.Fprintln(os.Stderr, "Error en comando ver_mas_visitados")
 				return
 			}
 			n := servidor.Atoi(parts[1])
-			servidor.VerMasVisitados(n)
+			datServ.VerMasVisitados(n)
 		default:
 			fmt.Fprintf(os.Stderr, "Error en comando %s\n", parts[0])
 			return
