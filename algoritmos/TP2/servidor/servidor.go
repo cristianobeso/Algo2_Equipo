@@ -73,7 +73,7 @@ func (serv *Servidor) AgregarArchivo(archivo string) error {
 		if serv.visitantes.Pertenece(ip) {
 			datos := serv.visitantes.Obtener(ip)
 			//El tiempo actual siempre es mayor al tiempo de la anterior peticion
-			if tiempo.Sub(datos.tiempo).Seconds() >= 2 { // si la diferencia es mayor a 2 segundos
+			if tiempo.Sub(datos.tiempo).Seconds() <= 2 { // si la diferencia es menor a 2 segundos
 				cant = datos.cantidadPetisiones + 1
 			}
 			if cant >= 5 && !datos.denegado {
@@ -81,7 +81,7 @@ func (serv *Servidor) AgregarArchivo(archivo string) error {
 				deng = true
 			}
 		}
-		cantVist := 0
+		cantVist := 1
 		if serv.visitados.Pertenece(recurso) {
 			datos := serv.visitados.Obtener(recurso)
 			cantVist = datos + 1
@@ -102,7 +102,7 @@ func (serv *Servidor) AgregarArchivo(archivo string) error {
 
 func (serv *Servidor) VerVisitantes(desde, hasta string) {
 	serv.visitantes.IterarRango(&desde, &hasta, func(clave string, dato entrada) bool { fmt.Printf("\t%s\n", clave); return true })
-	fmt.Printf("OK")
+	fmt.Println("OK")
 }
 
 func (serv *Servidor) VerMasVisitados(n int) {
@@ -115,11 +115,23 @@ func (serv *Servidor) VerMasVisitados(n int) {
 	for iter.HaySiguiente() {
 		rec, cant := iter.VerActual()
 		arr = append(arr, Dato{cantidad: cant, recurso: rec})
+		iter.Siguiente()
 	}
 	TDAHeap.HeapSort(arr, func(elemento1, elemento2 Dato) int { return elemento1.cantidad - elemento2.cantidad })
-	for i := range n {
-		fmt.Printf(arr[i].recurso)
+	fmt.Println("Sitios más visitados:")
+	for i := len(arr) - 1; i >= 0; i-- {
+		if i < len(arr)-n {
+			break
+		}
+		fmt.Printf("\t%s - %d\n", arr[i].recurso, arr[i].cantidad)
 	}
+	fmt.Println("OK")
+	// for i, val := range arr {
+	// 	if i >= n {
+	// 		break
+	// 	}
+	// 	fmt.Printf("\t%s - %d\n", val.recurso, val.cantidad)
+	// }
 }
 
 // Procesa un archivo de log y detecta posibles ataques de DoS.
@@ -131,7 +143,7 @@ func (serv *Servidor) VerMasVisitados(n int) {
 // 	defer file.Close()
 
 // 	scanner := bufio.NewScanner(file)
-// 	ipRequests := make(map[string][]time.Time) // Para detectar DoS
+// 	ipRequests := make(map[string][]pasandoletime.Time) // Para detectar DoS
 // 	for scanner.Scan() {
 // 		line := scanner.Text()
 // 		parts := strings.Split(line, "\t")

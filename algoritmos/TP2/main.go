@@ -16,7 +16,7 @@ func main() {
 		parts := strings.Fields(line)
 
 		if len(parts) == 0 {
-			continue
+			break
 		}
 
 		switch parts[0] {
