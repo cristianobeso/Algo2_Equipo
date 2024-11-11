@@ -83,7 +83,7 @@ func (serv *Servidor) AgregarArchivo(archivo string) error {
 		}
 		cantVist := 0
 		if serv.visitados.Pertenece(recurso) {
-			datos := serv.visitados.Obtener(ip)
+			datos := serv.visitados.Obtener(recurso)
 			cantVist = datos + 1
 
 		}
