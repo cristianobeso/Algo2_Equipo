@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	TDAHeap "tdas/cola_prioridad"
+	TDADiccionario "tdas/diccionario"
 	"time"
 )
 
@@ -23,6 +25,104 @@ var (
 	logEntries            []LogEntry
 	timeLayout            = "2006-01-02T15:04:05-07:00"
 )
+
+type entrada struct {
+	tiempo             time.Time
+	metodo             string
+	recurso            string
+	cantidadPetisiones int
+	denegado           bool
+}
+
+// Almacenaremos todo en un abb para tener las busquedas por rangos
+type Servidor struct {
+	visitantes TDADiccionario.DiccionarioOrdenado[string, entrada]
+	visitados  TDADiccionario.Diccionario[string, int]
+	denegados  []string
+}
+
+func CrearEstructuraDatos() DatosServidor {
+	return &Servidor{visitantes: TDADiccionario.CrearABB[string, entrada](CompareIPs), visitados: TDADiccionario.CrearHash[string, int](), denegados: make([]string, 0)}
+}
+
+func (serv *Servidor) AgregarArchivo(archivo string) error {
+	file, err := os.Open(archivo)
+	if err != nil {
+		return fmt.Errorf("Error al abrir el archivo: %v", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.Split(line, "\t")
+		if len(parts) != 4 {
+			return fmt.Errorf("Formato incorrecto en el log: %s", line)
+		}
+
+		ip := parts[0]
+		tiempo, err := time.Parse(timeLayout, parts[1])
+		if err != nil {
+			return fmt.Errorf("Error al parsear fecha: %v", err)
+		}
+		metodo := parts[2]
+		recurso := parts[3]
+		cant := 0
+		deng := false
+
+		if serv.visitantes.Pertenece(ip) {
+			datos := serv.visitantes.Obtener(ip)
+
+			// tengo que hacer una funcion para que me de en segundos la diferencia
+			if tiempo-datos.tiempo >= 2 { // si la diferencia es mayor a 2 segundos
+				cant = datos.cantidadPetisiones + 1
+			}
+			if cant >= 5 && !datos.denegado {
+				serv.denegados = append(serv.denegados, ip)
+				deng = true
+			}
+		}
+		cantVist := 0
+		if serv.visitados.Pertenece(recurso) {
+			datos := serv.visitados.Obtener(ip)
+			cantVist = datos + 1
+
+		}
+		serv.visitados.Guardar(recurso, cantVist)
+		serv.visitantes.Guardar(ip, entrada{tiempo: tiempo, metodo: metodo, recurso: recurso, cantidadPetisiones: cant, denegado: deng})
+
+	}
+	TDAHeap.HeapSort(serv.denegados, CompareIPs)
+	for i := len(serv.denegados) - 1; i >= 0; i-- {
+		fmt.Printf(serv.denegados[i])
+	}
+
+	fmt.Println("OK")
+	return nil
+}
+
+func (serv *Servidor) VerVisitantes(desde, hasta string) {
+	serv.visitantes.IterarRango(&desde, &hasta, func(clave string, dato entrada) bool { fmt.Printf("\t%s\n", clave); return true })
+	fmt.Printf("OK")
+}
+
+func (serv *Servidor) VerMasVisitados(n int) {
+	type Dato struct {
+		cantidad int
+		recurso  string
+	}
+	iter := serv.visitados.Iterador()
+	arr := make([]Dato, 0)
+	for iter.HaySiguiente() {
+		rec, cant := iter.VerActual()
+		arr = append(arr, Dato{cantidad: cant, recurso: rec})
+	}
+	TDAHeap.HeapSort(arr, func() int {}) // funcion de comparacion para las cantidades
+	for i := range n {
+		fmt.Printf(arr[i].recurso)
+	}
+}
 
 // Procesa un archivo de log y detecta posibles ataques de DoS.
 func AgregarArchivo(nombre_archivo string) error {
