@@ -40,13 +40,14 @@ type Servidor struct {
 }
 
 func CrearEstructuraDatos() DatosServidor {
-	return &Servidor{visitantes: TDADiccionario.CrearABB[string, entrada](CompareIPs), visitados: TDADiccionario.CrearHash[string, int](), denegados: TDADiccionario.CrearHash[string, string]()}
+	return &Servidor{visitantes: TDADiccionario.CrearABB[string, entrada](CompareIPs), visitados: TDADiccionario.CrearHash[string, int]()}
 }
 
 func (serv *Servidor) AgregarArchivo(archivo string) error {
+	serv.denegados = TDADiccionario.CrearHash[string, string]()
 	file, err := os.Open(archivo)
 	if err != nil {
-		return fmt.Errorf("Error al abrir el archivo: %v", err)
+		return fmt.Errorf("Error en comando agregar_arc")
 	}
 	defer file.Close()
 
@@ -71,13 +72,15 @@ func (serv *Servidor) AgregarArchivo(archivo string) error {
 		if serv.visitantes.Pertenece(ip) {
 			datos := serv.visitantes.Obtener(ip)
 			//El tiempo actual siempre es mayor al tiempo de la anterior peticion
-			if tiempo.Sub(datos.tiempo).Seconds() <= 2 { // si la diferencia es menor a 2 segundos
+			if tiempo.Sub(datos.tiempo).Seconds() < 2 && tiempo.Sub(datos.tiempo).Seconds() >= 0 { // si la diferencia es menor a 2 segundos
 				cant = datos.cantidadPetisiones + 1
-			}
-			if cant >= 5 && !serv.denegados.Pertenece(ip) {
-				serv.denegados.Guardar(ip, ip)
+				tiempo = datos.tiempo
+				if cant >= 5 && !serv.denegados.Pertenece(ip) {
+					serv.denegados.Guardar(ip, ip)
 
+				}
 			}
+
 		}
 		cantVist := 1
 		if serv.visitados.Pertenece(recurso) {
@@ -99,7 +102,7 @@ func (serv *Servidor) AgregarArchivo(archivo string) error {
 		iter.Siguiente()
 	}
 	TDAHeap.HeapSort(arr, CompareIPs)
-	for i := len(arr) - 1; i >= 0; i-- {
+	for i := 0; i < len(arr); i++ {
 		fmt.Printf("DoS: %s\n", arr[i])
 	}
 	//*****************
@@ -129,112 +132,14 @@ func (serv *Servidor) VerMasVisitados(n int) {
 	TDAHeap.HeapSort(arr, func(elemento1, elemento2 Dato) int { return elemento2.cantidad - elemento1.cantidad })
 	fmt.Println("Sitios más visitados:")
 	for i := 0; i < len(arr); i++ {
-		if i > n {
+		if i >= n {
 			break
 		}
 		fmt.Printf("\t%s - %d\n", arr[i].recurso, arr[i].cantidad)
 	}
 	fmt.Println("OK")
-	// for i, val := range arr {
-	// 	if i >= n {
-	// 		break
-	// 	}
-	// 	fmt.Printf("\t%s - %d\n", val.recurso, val.cantidad)
-	// }
+
 }
-
-// Procesa un archivo de log y detecta posibles ataques de DoS.
-// func AgregarArchivo(nombre_archivo string) error {
-// 	file, err := os.Open(nombre_archivo)
-// 	if err != nil {
-// 		return fmt.Errorf("Error al abrir el archivo: %v", err)
-// 	}
-// 	defer file.Close()
-
-// 	scanner := bufio.NewScanner(file)
-// 	ipRequests := make(map[string][]pasandoletime.Time) // Para detectar DoS
-// 	for scanner.Scan() {
-// 		line := scanner.Text()
-// 		parts := strings.Split(line, "\t")
-// 		if len(parts) != 4 {
-// 			return fmt.Errorf("Formato incorrecto en el log: %s", line)
-// 		}
-
-// 		ip := parts[0]
-// 		dateTime, err := time.Parse(timeLayout, parts[1])
-// 		if err != nil {
-// 			return fmt.Errorf("Error al parsear fecha: %v", err)
-// 		}
-// 		resource := parts[3]
-
-// 		logEntries = append(logEntries, LogEntry{IP: ip, DateTime: dateTime, Resource: resource})
-// 		visitasPorIP[ip]++
-// 		solicitudesPorRecurso[resource]++
-
-// 		// Detectar posibles ataques de DoS
-// 		ipRequests[ip] = append(ipRequests[ip], dateTime)
-// 		if len(ipRequests[ip]) >= 5 {
-// 			if ipRequests[ip][len(ipRequests[ip])-1].Sub(ipRequests[ip][len(ipRequests[ip])-5]) < 2*time.Second {
-// 				if !sospechosasDoS[ip] {
-// 					fmt.Printf("DoS: %s\n", ip)
-// 					sospechosasDoS[ip] = true
-// 				}
-// 			}
-// 		}
-// 	}
-// 	if err := scanner.Err(); err != nil {
-// 		return fmt.Errorf("Error al leer el archivo: %v", err)
-// 	}
-
-// 	fmt.Println("OK")
-// 	return nil
-// }
-
-// // Muestra todas las IPs que realizaron alguna petición dentro de un rango.
-// func VerVisitantes(desde, hasta string) {
-// 	ipList := make(map[string]bool)
-
-// 	for _, entry := range logEntries {
-// 		if CompareIPs(entry.IP, desde) >= 0 && CompareIPs(entry.IP, hasta) <= 0 {
-// 			ipList[entry.IP] = true
-// 		}
-// 	}
-
-// 	var sortedIPs []string
-// 	for ip := range ipList {
-// 		sortedIPs = append(sortedIPs, ip)
-// 	}
-// 	sort.Slice(sortedIPs, func(i, j int) bool {
-// 		return CompareIPs(sortedIPs[i], sortedIPs[j]) < 0
-// 	})
-
-// 	fmt.Println("Visitantes:")
-// 	for _, ip := range sortedIPs {
-// 		fmt.Printf("\t%s\n", ip)
-// 	}
-// 	fmt.Println("OK")
-// }
-
-// // Muestra los n recursos más visitados.
-// func VerMasVisitados(n int) {
-// 	type recurso struct {
-// 		nombre  string
-// 		visitas int
-// 	}
-// 	var recursos []recurso
-// 	for nombre, visitas := range solicitudesPorRecurso {
-// 		recursos = append(recursos, recurso{nombre, visitas})
-// 	}
-// 	sort.Slice(recursos, func(i, j int) bool {
-// 		return recursos[i].visitas > recursos[j].visitas
-// 	})
-
-// 	fmt.Println("Sitios más visitados:")
-// 	for i := 0; i < n && i < len(recursos); i++ {
-// 		fmt.Printf("\t%s - %d\n", recursos[i].nombre, recursos[i].visitas)
-// 	}
-// 	fmt.Println("OK")
-// }
 
 // Compara dos IPs numéricamente.
 func CompareIPs(ip1, ip2 string) int {
