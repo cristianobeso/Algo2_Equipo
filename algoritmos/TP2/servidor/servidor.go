@@ -30,18 +30,17 @@ type entrada struct {
 	metodo             string
 	recurso            string
 	cantidadPetisiones int
-	denegado           bool
 }
 
 // Almacenaremos todo en un abb para tener las busquedas por rangos
 type Servidor struct {
 	visitantes TDADiccionario.DiccionarioOrdenado[string, entrada]
 	visitados  TDADiccionario.Diccionario[string, int]
-	denegados  []string
+	denegados  TDADiccionario.Diccionario[string, string] // quizas seria mejor un heap
 }
 
 func CrearEstructuraDatos() DatosServidor {
-	return &Servidor{visitantes: TDADiccionario.CrearABB[string, entrada](CompareIPs), visitados: TDADiccionario.CrearHash[string, int](), denegados: make([]string, 0)}
+	return &Servidor{visitantes: TDADiccionario.CrearABB[string, entrada](CompareIPs), visitados: TDADiccionario.CrearHash[string, int](), denegados: TDADiccionario.CrearHash[string, string]()}
 }
 
 func (serv *Servidor) AgregarArchivo(archivo string) error {
@@ -67,8 +66,7 @@ func (serv *Servidor) AgregarArchivo(archivo string) error {
 		}
 		metodo := parts[2]
 		recurso := parts[3]
-		cant := 0
-		deng := false
+		cant := 1
 
 		if serv.visitantes.Pertenece(ip) {
 			datos := serv.visitantes.Obtener(ip)
@@ -76,9 +74,9 @@ func (serv *Servidor) AgregarArchivo(archivo string) error {
 			if tiempo.Sub(datos.tiempo).Seconds() <= 2 { // si la diferencia es menor a 2 segundos
 				cant = datos.cantidadPetisiones + 1
 			}
-			if cant >= 5 && !datos.denegado {
-				serv.denegados = append(serv.denegados, ip)
-				deng = true
+			if cant >= 5 && !serv.denegados.Pertenece(ip) {
+				serv.denegados.Guardar(ip, ip)
+
 			}
 		}
 		cantVist := 1
@@ -88,19 +86,30 @@ func (serv *Servidor) AgregarArchivo(archivo string) error {
 
 		}
 		serv.visitados.Guardar(recurso, cantVist)
-		serv.visitantes.Guardar(ip, entrada{tiempo: tiempo, metodo: metodo, recurso: recurso, cantidadPetisiones: cant, denegado: deng})
+		serv.visitantes.Guardar(ip, entrada{tiempo: tiempo, metodo: metodo, recurso: recurso, cantidadPetisiones: cant})
 
 	}
-	TDAHeap.HeapSort(serv.denegados, CompareIPs)
-	for i := len(serv.denegados) - 1; i >= 0; i-- {
-		fmt.Printf(serv.denegados[i])
+
+	// ****************
+	iter := serv.denegados.Iterador()
+	arr := make([]string, 0)
+	for iter.HaySiguiente() {
+		_, ip_g := iter.VerActual()
+		arr = append(arr, ip_g)
+		iter.Siguiente()
 	}
+	TDAHeap.HeapSort(arr, CompareIPs)
+	for i := len(arr) - 1; i >= 0; i-- {
+		fmt.Printf("DoS: %s\n", arr[i])
+	}
+	//*****************
 
 	fmt.Println("OK")
 	return nil
 }
 
 func (serv *Servidor) VerVisitantes(desde, hasta string) {
+	fmt.Println("Visitantes:")
 	serv.visitantes.IterarRango(&desde, &hasta, func(clave string, dato entrada) bool { fmt.Printf("\t%s\n", clave); return true })
 	fmt.Println("OK")
 }
@@ -117,10 +126,10 @@ func (serv *Servidor) VerMasVisitados(n int) {
 		arr = append(arr, Dato{cantidad: cant, recurso: rec})
 		iter.Siguiente()
 	}
-	TDAHeap.HeapSort(arr, func(elemento1, elemento2 Dato) int { return elemento1.cantidad - elemento2.cantidad })
+	TDAHeap.HeapSort(arr, func(elemento1, elemento2 Dato) int { return elemento2.cantidad - elemento1.cantidad })
 	fmt.Println("Sitios más visitados:")
-	for i := len(arr) - 1; i >= 0; i-- {
-		if i < len(arr)-n {
+	for i := 0; i < len(arr); i++ {
+		if i > n {
 			break
 		}
 		fmt.Printf("\t%s - %d\n", arr[i].recurso, arr[i].cantidad)
