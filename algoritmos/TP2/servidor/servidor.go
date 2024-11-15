@@ -47,7 +47,7 @@ func (serv *Servidor) AgregarArchivo(archivo string) error {
 	serv.denegados = TDADiccionario.CrearHash[string, string]()
 	file, err := os.Open(archivo)
 	if err != nil {
-		return fmt.Errorf("Error en comando agregar_arc")
+		return fmt.Errorf("Error en comando agregar_archivo")
 	}
 	defer file.Close()
 
