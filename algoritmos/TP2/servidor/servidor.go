@@ -18,10 +18,6 @@ type LogEntry struct {
 }
 
 var (
-	// visitasPorIP          = make(map[string]int)
-	// solicitudesPorRecurso = make(map[string]int)
-	// sospechosasDoS        = make(map[string]bool)
-	// logEntries            []LogEntry
 	timeLayout = "2006-01-02T15:04:05-07:00"
 )
 
