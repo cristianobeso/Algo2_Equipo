@@ -10,7 +10,7 @@ type heap[T any] struct {
 // Precondición: funcion_cmp no es nil.
 // Postcondición: Devuelve un heap vacío.
 func CrearHeap[T any](funcion_cmp func(T, T) int) ColaPrioridad[T] {
-	return &heap[T]{datos: []T{}, cant: 0, cmp: funcion_cmp}
+	return &heap[T]{datos: make([]T, 1), cant: 0, cmp: funcion_cmp}
 }
 
 // CrearHeapArr construye un heap a partir de un arreglo y una función de comparación.
@@ -38,7 +38,10 @@ func (h *heap[T]) EstaVacia() bool {
 // Precondición: Ninguna.
 // Postcondición: Agrega 'valor' al heap, manteniendo la propiedad de heap.
 func (h *heap[T]) Encolar(valor T) {
-	h.datos = append(h.datos, valor)
+	if cap(h.datos) == h.cant {
+		h.redimensionar(cap(h.datos) * 2)
+	}
+	h.datos[h.cant] = valor
 	h.cant++
 	h.heapifyUp(h.cant - 1)
 }
@@ -63,10 +66,14 @@ func (h *heap[T]) Desencolar() T {
 	max := h.datos[0]
 	h.intercambiar(0, h.cant-1)
 	h.cant--
-	h.datos = h.datos[:h.cant]
+	h.datos = h.datos[:h.cant] //creo que esta linea no es necesaria
 	h.heapifyDown(0)
 
-	h.redimensionarSiEsNecesario()
+	if h.cant*4 <= cap(h.datos) {
+		h.redimensionar(cap(h.datos) / 2)
+	}
+
+	//h.redimensionarSiEsNecesario()
 
 	return max
 }
@@ -74,14 +81,14 @@ func (h *heap[T]) Desencolar() T {
 // redimensionarSiEsNecesario ajusta la capacidad del heap si es excesiva.
 // Precondición: Ninguna.
 // Postcondición: Reduce la capacidad del slice 'datos' si es más del doble de 'cant'.
-func (h *heap[T]) redimensionarSiEsNecesario() {
+// func (h *heap[T]) redimensionarSiEsNecesario() {
 
-	if len(h.datos) > 2*h.cant {
-		nuevoDatos := make([]T, h.cant)
-		copy(nuevoDatos, h.datos)
-		h.datos = nuevoDatos
-	}
-}
+// 	if len(h.datos) > 2*h.cant {
+// 		nuevoDatos := make([]T, h.cant) //xd
+// 		copy(nuevoDatos, h.datos)
+// 		h.datos = nuevoDatos
+// 	}
+// }
 
 // Cantidad devuelve el número de elementos en el heap.
 // Precondición: Ninguna.
@@ -153,4 +160,10 @@ func HeapSort[T any](elementos []T, funcion_cmp func(T, T) int) {
 		h.datos = h.datos[:h.cant]
 		h.heapifyDown(0)
 	}
+}
+
+func (h *heap[T]) redimensionar(tam int) {
+	nuevaArreglo := make([]T, tam)
+	copy(nuevaArreglo, h.datos)
+	h.datos = nuevaArreglo
 }
