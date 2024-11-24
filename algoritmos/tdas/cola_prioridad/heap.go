@@ -6,6 +6,8 @@ type heap[T any] struct {
 	cmp   func(T, T) int
 }
 
+const FACTOR_REDIMENSION = 2
+
 // CrearHeap crea un heap vacío con una función de comparación proporcionada.
 // Precondición: funcion_cmp no es nil.
 // Postcondición: Devuelve un heap vacío.
@@ -21,7 +23,7 @@ func CrearHeapArr[T any](arreglo []T, funcion_cmp func(T, T) int) ColaPrioridad[
 	copy(copia, arreglo)
 
 	h := &heap[T]{datos: copia, cant: len(copia), cmp: funcion_cmp}
-	for i := len(h.datos)/2 - 1; i >= 0; i-- {
+	for i := len(h.datos)/FACTOR_REDIMENSION - 1; i >= 0; i-- {
 		h.heapifyDown(i)
 	}
 	return h
@@ -39,7 +41,7 @@ func (h *heap[T]) EstaVacia() bool {
 // Postcondición: Agrega 'valor' al heap, manteniendo la propiedad de heap.
 func (h *heap[T]) Encolar(valor T) {
 	if cap(h.datos) == h.cant {
-		h.redimensionar(cap(h.datos) * 2)
+		h.redimensionar(cap(h.datos) * FACTOR_REDIMENSION)
 	}
 	h.datos[h.cant] = valor
 	h.cant++
@@ -70,7 +72,7 @@ func (h *heap[T]) Desencolar() T {
 	h.heapifyDown(0)
 
 	if h.cant*4 <= cap(h.datos) {
-		h.redimensionar(cap(h.datos) / 2)
+		h.redimensionar(cap(h.datos) / FACTOR_REDIMENSION)
 	}
 
 	//h.redimensionarSiEsNecesario()
@@ -109,7 +111,7 @@ func (h *heap[T]) intercambiar(i, j int) {
 // Postcondición: El elemento en 'pos' se ajusta en el heap, manteniendo la propiedad de heap.
 func (h *heap[T]) heapifyUp(pos int) {
 	for pos > 0 {
-		padre := (pos - 1) / 2
+		padre := (pos - 1) / FACTOR_REDIMENSION
 		if h.cmp(h.datos[pos], h.datos[padre]) <= 0 {
 			break
 		}
@@ -124,8 +126,8 @@ func (h *heap[T]) heapifyUp(pos int) {
 func (h *heap[T]) heapifyDown(pos int) {
 	ultimo := h.cant - 1
 	for {
-		hijoIzq := 2*pos + 1
-		hijoDer := 2*pos + 2
+		hijoIzq := FACTOR_REDIMENSION*pos + 1
+		hijoDer := FACTOR_REDIMENSION*pos + FACTOR_REDIMENSION
 		mayor := pos
 
 		if hijoIzq <= ultimo && h.cmp(h.datos[hijoIzq], h.datos[mayor]) > 0 {
@@ -149,7 +151,7 @@ func HeapSort[T any](elementos []T, funcion_cmp func(T, T) int) {
 	h := &heap[T]{datos: elementos, cant: len(elementos), cmp: funcion_cmp}
 
 	//  heap max-heap
-	for i := len(elementos)/2 - 1; i >= 0; i-- {
+	for i := len(elementos)/FACTOR_REDIMENSION - 1; i >= 0; i-- {
 		h.heapifyDown(i)
 	}
 
