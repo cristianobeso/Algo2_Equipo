@@ -80,18 +80,6 @@ func (h *heap[T]) Desencolar() T {
 	return max
 }
 
-// redimensionarSiEsNecesario ajusta la capacidad del heap si es excesiva.
-// Precondición: Ninguna.
-// Postcondición: Reduce la capacidad del slice 'datos' si es más del doble de 'cant'.
-// func (h *heap[T]) redimensionarSiEsNecesario() {
-
-// 	if len(h.datos) > 2*h.cant {
-// 		nuevoDatos := make([]T, h.cant) //xd
-// 		copy(nuevoDatos, h.datos)
-// 		h.datos = nuevoDatos
-// 	}
-// }
-
 // Cantidad devuelve el número de elementos en el heap.
 // Precondición: Ninguna.
 // Postcondición: Devuelve la cantidad de elementos en el heap
